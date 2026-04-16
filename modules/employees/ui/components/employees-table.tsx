@@ -49,7 +49,7 @@ export function EmployeesTable({ employees }: EmployeesTableProps) {
 
   const sellers = employees.filter(
     employee =>
-      employee.roles.includes('seller') && !employee.roles.includes('admin')
+      employee.roles.includes('seller') && !employee.roles.includes('owner')
   )
 
   async function handleDelete() {

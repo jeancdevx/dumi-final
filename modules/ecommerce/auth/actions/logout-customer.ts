@@ -12,19 +12,8 @@ export async function logoutCustomer(): Promise<void> {
   const accessToken = cookieStore.get(AUTH_COOKIES.ACCESS_TOKEN)?.value
   const antiCsrf = cookieStore.get(AUTH_COOKIES.ANTI_CSRF)?.value
 
-  try {
-    // Llamar al endpoint de logout
-    await fetch(`${API_URL}/auth/signout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Cookie: `${AUTH_COOKIES.ACCESS_TOKEN}=${accessToken}`,
-        'anti-csrf': antiCsrf || ''
-      }
-    })
-  } catch (error) {
-    console.error('Logout error:', error)
-  }
+  // Solo eliminamos las cookies locales,
+  // el backend no tiene un endpoint de signout y Cognito maneja JWTs sin estado.
 
   // Eliminar cookies locales
   cookieStore.delete(AUTH_COOKIES.ACCESS_TOKEN)

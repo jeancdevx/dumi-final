@@ -118,7 +118,7 @@ export function CreateEmployeeForm() {
                   <FormControl>
                     <Input
                       type='email'
-                      placeholder='empleado@dumi.com'
+                      placeholder='empleado@telar.com'
                       autoComplete='email'
                       {...field}
                     />

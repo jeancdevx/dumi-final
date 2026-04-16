@@ -152,7 +152,7 @@ const sellerNavGroups: NavGroup[] = [
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
 
-  const isAdmin = user.roles.includes('admin')
+  const isAdmin = user.roles.includes('owner')
   const navGroups = isAdmin ? adminNavGroups : sellerNavGroups
 
   const initials =
@@ -170,7 +170,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-sm font-bold'>
             D
           </div>
-          <span className='text-lg font-semibold'>DUMI</span>
+          <span className='text-lg font-semibold'>TELAR</span>
         </Link>
       </SidebarHeader>
 
@@ -254,13 +254,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </div>
             <Separator />
             <div className='p-1'>
-              <button
-                onClick={() => signOut()}
-                className='text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
-              >
-                <LogOut className='h-4 w-4' />
-                <span>Cerrar sesión</span>
-              </button>
+              <form action={signOut} className='w-full'>
+                <button
+                  type='submit'
+                  className='text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
+                >
+                  <LogOut className='h-4 w-4' />
+                  <span>Cerrar sesión</span>
+                </button>
+              </form>
             </div>
           </PopoverContent>
         </Popover>

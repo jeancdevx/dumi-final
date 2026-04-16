@@ -9,7 +9,7 @@ export default async function AdminDashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  await requireRole(['admin'])
+  await requireRole(['owner'])
 
   const employee = await getCurrentEmployee()
 
