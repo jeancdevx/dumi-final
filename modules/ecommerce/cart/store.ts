@@ -72,7 +72,7 @@ export const useCartStore = create<CartStore>()(
       }
     }),
     {
-      name: 'dumi-cart'
+      name: 'telar-cart'
     }
   )
 )

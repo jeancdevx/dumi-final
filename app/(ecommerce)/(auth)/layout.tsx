@@ -15,7 +15,7 @@ export default function EcommerceAuthLayout({
       <header className='border-b'>
         <div className='container mx-auto flex h-16 items-center px-4'>
           <Link href={ECOMMERCE_ROUTES.CATALOG} className='text-xl font-bold'>
-            DUMI
+            TELAR
           </Link>
         </div>
       </header>
@@ -28,7 +28,7 @@ export default function EcommerceAuthLayout({
       {/* Footer simple */}
       <footer className='border-t py-6'>
         <div className='text-muted-foreground container mx-auto px-4 text-center text-sm'>
-          © {new Date().getFullYear()} DUMI. Todos los derechos reservados.
+          © {new Date().getFullYear()} TELAR. Todos los derechos reservados.
         </div>
       </footer>
     </div>
