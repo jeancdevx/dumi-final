@@ -6,34 +6,34 @@ import { redirect } from 'next/navigation'
 import { decodeJwt } from 'jose'
 
 import { AUTH_COOKIES, REDIRECT_PATHS } from '../constants'
-import type { JWTPayload, Role, UserSession } from '../types'
+import type { CognitoJWTPayload, Role, UserSession } from '../types'
 
 export async function getSession(): Promise<UserSession | null> {
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get(AUTH_COOKIES.ACCESS_TOKEN)?.value
+  const idToken = cookieStore.get(AUTH_COOKIES.ID_TOKEN)?.value
 
-  if (!accessToken) {
+  if (!idToken) {
     return null
   }
 
   try {
-    const payload = decodeJwt<JWTPayload>(accessToken)
+    const payload = decodeJwt<CognitoJWTPayload>(idToken)
 
     const now = Math.floor(Date.now() / 1000)
     if (payload.exp && payload.exp < now) {
       return null
     }
 
-    const roles = payload['st-role']?.v || []
-    const permissions = payload['st-perm']?.v || []
-    const appUserId = payload.appUserId?.v || ''
+    const roles: Role[] = payload['cognito:groups'] ?? []
+    const tenantId = payload['custom:tenant_id'] ?? null
 
     return {
       userId: payload.sub,
-      appUserId,
-      email: '',
-      roles: roles as Role[],
-      permissions
+      email: payload.email,
+      name: payload.name,
+      familyName: payload.family_name,
+      roles,
+      tenantId
     }
   } catch {
     return null
@@ -63,12 +63,17 @@ export async function requireRole(allowedRoles: Role[]): Promise<UserSession> {
     redirect('/unauthorized')
   }
 
+  // Si no tiene tenant configurado, redirigir al setup
+  if (!session.tenantId) {
+    redirect('/tenant-setup')
+  }
+
   return session
 }
 
 export function getRedirectPathByRole(roles: Role[]): string {
-  if (roles.includes('admin')) {
-    return REDIRECT_PATHS.admin
+  if (roles.includes('owner')) {
+    return REDIRECT_PATHS.owner
   }
 
   if (roles.includes('seller')) {
@@ -78,16 +83,8 @@ export function getRedirectPathByRole(roles: Role[]): string {
   return '/sign-in'
 }
 
-export async function getAntiCsrfToken(): Promise<string | null> {
-  const cookieStore = await cookies()
-  return cookieStore.get(AUTH_COOKIES.ANTI_CSRF)?.value || null
-}
-
 export async function clearSession(): Promise<void> {
   const cookieStore = await cookies()
-
-  cookieStore.delete(AUTH_COOKIES.ACCESS_TOKEN)
+  cookieStore.delete(AUTH_COOKIES.ID_TOKEN)
   cookieStore.delete(AUTH_COOKIES.REFRESH_TOKEN)
-  cookieStore.delete(AUTH_COOKIES.ANTI_CSRF)
-  cookieStore.delete(AUTH_COOKIES.FRONT_TOKEN)
 }

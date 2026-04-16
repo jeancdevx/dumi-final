@@ -1,44 +1,30 @@
-export type Role = 'admin' | 'seller'
+export type Role = 'owner' | 'seller'
 
-export interface SignInResponse {
-  status: 'OK' | 'WRONG_CREDENTIALS_ERROR' | 'FIELD_ERROR'
-  user?: {
-    id: string
-    emails: string[]
-    timeJoined: number
-  }
-  formFields?: Array<{
-    id: string
-    error: string
-  }>
-}
-
-export interface JWTPayload {
+// Payload del idToken de Cognito
+export interface CognitoJWTPayload {
   sub: string
+  email: string
+  email_verified: boolean
+  name: string
+  family_name: string
+  'cognito:username': string
+  'cognito:groups'?: Role[]
+  'custom:tenant_id'?: string
+  aud: string
+  iss: string
+  token_use: 'id'
+  auth_time: number
   exp: number
   iat: number
-  'st-role': {
-    v: Role[]
-    t: number
-  }
-  'st-perm': {
-    v: string[]
-    t: number
-  }
-  appUserId: {
-    v: string
-    t: number
-  }
-  sessionHandle: string
-  antiCsrfToken: string
 }
 
 export interface UserSession {
   userId: string
-  appUserId: string
   email: string
+  name: string
+  familyName: string
   roles: Role[]
-  permissions: string[]
+  tenantId: string | null
 }
 
 export interface ActionResponse<T = void> {
