@@ -2,10 +2,12 @@ import type { Role } from '@/modules/auth/types'
 
 export interface Employee {
   id: string
+  sub: string
   names: string
   lastNames: string
   email: string
-  superTokensId: string
+  tenantId: string
+  isActive: boolean
   roles: Role[]
   createdAt: string
   updatedAt: string

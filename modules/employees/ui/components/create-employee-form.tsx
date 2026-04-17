@@ -29,6 +29,13 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 
 import { createEmployee } from '../../actions/create-employee'
 import { createEmployeeSchema, type CreateEmployeeInput } from '../../schemas'
@@ -38,7 +45,13 @@ const initialState: ActionResponse<CreateEmployeeResponse> = {
   success: false
 }
 
-export function CreateEmployeeForm() {
+interface CreateEmployeeFormProps {
+  canAssignAdminRole: boolean
+}
+
+export function CreateEmployeeForm({
+  canAssignAdminRole
+}: CreateEmployeeFormProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const [state, formAction, isPending] = useActionState(
     createEmployee,
@@ -51,7 +64,7 @@ export function CreateEmployeeForm() {
       names: '',
       lastNames: '',
       email: '',
-      password: ''
+      role: 'seller'
     }
   })
 
@@ -75,7 +88,7 @@ export function CreateEmployeeForm() {
         <DialogHeader>
           <DialogTitle>Crear nuevo empleado</DialogTitle>
           <DialogDescription>
-            El empleado será creado con el rol de vendedor automáticamente.
+            Completa los datos para registrar al empleado en la organización.
           </DialogDescription>
         </DialogHeader>
 
@@ -130,18 +143,36 @@ export function CreateEmployeeForm() {
 
             <FormField
               control={form.control}
-              name='password'
+              name='role'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
+                  <FormLabel>Rol</FormLabel>
                   <FormControl>
-                    <Input
-                      type='password'
-                      placeholder='••••••••'
-                      autoComplete='new-password'
-                      {...field}
-                    />
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecciona un rol' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='seller'>SELLER</SelectItem>
+                        {canAssignAdminRole ? (
+                          <SelectItem value='admin'>ADMIN</SelectItem>
+                        ) : null}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
+                  <input
+                    type='hidden'
+                    name='role'
+                    value={field.value ?? 'seller'}
+                  />
+                  {!canAssignAdminRole && (
+                    <p className='text-muted-foreground text-xs'>
+                      Solo un owner puede crear empleados con rol ADMIN.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
