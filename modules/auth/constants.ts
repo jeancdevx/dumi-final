@@ -2,11 +2,13 @@ import type { Role } from './types'
 
 export const ROLES = {
   OWNER: 'owner',
+  ADMIN: 'admin',
   SELLER: 'seller'
 } as const satisfies Record<string, Role>
 
 export const REDIRECT_PATHS: Record<Role, string> = {
   owner: '/admin',
+  admin: '/admin',
   seller: '/seller'
 }
 

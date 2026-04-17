@@ -1,4 +1,4 @@
-export type Role = 'owner' | 'seller'
+export type Role = 'owner' | 'admin' | 'seller'
 
 // Payload del idToken de Cognito
 export interface CognitoJWTPayload {

@@ -152,7 +152,7 @@ const sellerNavGroups: NavGroup[] = [
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
 
-  const isAdmin = user.roles.includes('owner')
+  const isAdmin = user.roles.includes('owner') || user.roles.includes('admin')
   const navGroups = isAdmin ? adminNavGroups : sellerNavGroups
 
   const initials =

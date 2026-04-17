@@ -8,6 +8,14 @@ import { decodeJwt } from 'jose'
 import { AUTH_COOKIES, REDIRECT_PATHS } from '../constants'
 import type { CognitoJWTPayload, Role, UserSession } from '../types'
 
+function normalizeRoles(rawRoles: string[] = []): Role[] {
+  return rawRoles
+    .map(role => role.toLowerCase())
+    .filter((role): role is Role =>
+      role === 'owner' || role === 'admin' || role === 'seller'
+    )
+}
+
 export async function getSession(): Promise<UserSession | null> {
   const cookieStore = await cookies()
   const idToken = cookieStore.get(AUTH_COOKIES.ID_TOKEN)?.value
@@ -24,7 +32,7 @@ export async function getSession(): Promise<UserSession | null> {
       return null
     }
 
-    const roles: Role[] = payload['cognito:groups'] ?? []
+    const roles = normalizeRoles(payload['cognito:groups'])
     const tenantId = payload['custom:tenant_id'] ?? null
 
     return {
@@ -74,6 +82,10 @@ export async function requireRole(allowedRoles: Role[]): Promise<UserSession> {
 export function getRedirectPathByRole(roles: Role[]): string {
   if (roles.includes('owner')) {
     return REDIRECT_PATHS.owner
+  }
+
+  if (roles.includes('admin')) {
+    return REDIRECT_PATHS.admin
   }
 
   if (roles.includes('seller')) {

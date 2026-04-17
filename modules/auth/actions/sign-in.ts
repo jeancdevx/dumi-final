@@ -19,6 +19,14 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: COGNITO.REGION
 })
 
+function normalizeRoles(rawRoles: string[] = []): Role[] {
+  return rawRoles
+    .map(role => role.toLowerCase())
+    .filter((role): role is Role =>
+      role === 'owner' || role === 'admin' || role === 'seller'
+    )
+}
+
 export async function signIn(
   _prevState: ActionResponse<{ redirectTo: string }>,
   formData: FormData
@@ -57,7 +65,7 @@ export async function signIn(
 
     // Decodificar el idToken para obtener roles y tenantId
     const payload = decodeJwt<CognitoJWTPayload>(IdToken)
-    const roles: Role[] = payload['cognito:groups'] ?? []
+    const roles = normalizeRoles(payload['cognito:groups'])
     const tenantId = payload['custom:tenant_id'] ?? null
 
     const cookieStore = await cookies()
@@ -79,8 +87,15 @@ export async function signIn(
       return { success: true, data: { redirectTo: '/tenant-setup' } }
     }
 
-    const primaryRole = roles[0] as Role | undefined
-    const redirectTo = primaryRole ? REDIRECT_PATHS[primaryRole] : '/sign-in'
+    let redirectTo = '/sign-in'
+
+    if (roles.includes('owner')) {
+      redirectTo = REDIRECT_PATHS.owner
+    } else if (roles.includes('admin')) {
+      redirectTo = REDIRECT_PATHS.admin
+    } else if (roles.includes('seller')) {
+      redirectTo = REDIRECT_PATHS.seller
+    }
 
     return { success: true, data: { redirectTo } }
   } catch (error) {
