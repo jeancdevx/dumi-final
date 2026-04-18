@@ -42,12 +42,14 @@ interface EmployeesTableProps {
   employees: Employee[]
   currentUserRoles: Role[]
   currentUserEmail: string
+  currentUserSub: string
 }
 
 export function EmployeesTable({
   employees,
   currentUserRoles,
-  currentUserEmail
+  currentUserEmail,
+  currentUserSub
 }: EmployeesTableProps) {
   const [employeeToUpdate, setEmployeeToUpdate] = useState<{
     id: string
@@ -88,7 +90,10 @@ export function EmployeesTable({
   }
 
   function canManageEmployee(employee: Employee): boolean {
-    if (employee.email === currentUserEmail) {
+    if (
+      employee.email === currentUserEmail ||
+      employee.sub === currentUserSub
+    ) {
       return false
     }
 

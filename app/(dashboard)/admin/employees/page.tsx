@@ -24,6 +24,7 @@ export default async function EmployeesPage() {
         employees={employees}
         currentUserRoles={session.roles}
         currentUserEmail={session.email}
+        currentUserSub={session.userId}
       />
     </div>
   )

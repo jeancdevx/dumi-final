@@ -47,6 +47,32 @@ export async function updateEmployeeStatus({
       }
     }
 
+    if (response.status === 403) {
+      const body = await response.json().catch(() => ({}))
+      const backendMessage: string = body?.message ?? ''
+
+      // Deactivation errors
+      if (backendMessage.toLowerCase().includes('your own account')) {
+        return { success: false, error: EMPLOYEE_ERRORS.CANNOT_DISABLE_SELF }
+      }
+      if (backendMessage.toLowerCase().includes('owner')) {
+        return { success: false, error: EMPLOYEE_ERRORS.CANNOT_DISABLE_OWNER }
+      }
+      if (backendMessage.toLowerCase().includes('disable another administrator')) {
+        return { success: false, error: EMPLOYEE_ERRORS.CANNOT_DISABLE_ADMIN }
+      }
+
+      // Reactivation errors
+      if (backendMessage.toLowerCase().includes('modify your own profile')) {
+        return { success: false, error: EMPLOYEE_ERRORS.CANNOT_REACTIVATE_SELF }
+      }
+      if (backendMessage.toLowerCase().includes('reactivate another administrator')) {
+        return { success: false, error: EMPLOYEE_ERRORS.CANNOT_REACTIVATE_ADMIN }
+      }
+
+      return { success: false, error: backendMessage || EMPLOYEE_ERRORS.UNKNOWN }
+    }
+
     if (!response.ok) {
       const body = await response.json().catch(() => ({}))
       return {
