@@ -3,16 +3,14 @@
 import { cookies } from 'next/headers'
 
 import {
-  AuthFlowType,
   CognitoIdentityProviderClient,
-  InitiateAuthCommand,
+  RespondToAuthChallengeCommand,
   NotAuthorizedException,
-  UserNotConfirmedException
 } from '@aws-sdk/client-cognito-identity-provider'
 import { decodeJwt } from 'jose'
 
 import { AUTH_COOKIES, AUTH_ERRORS, COGNITO, REDIRECT_PATHS } from '../constants'
-import { signInSchema } from '../schemas'
+import { forceChangePasswordSchema } from '../schemas'
 import type { ActionResponse, CognitoJWTPayload, Role } from '../types'
 
 const cognitoClient = new CognitoIdentityProviderClient({
@@ -27,46 +25,42 @@ function normalizeRoles(rawRoles: string[] = []): Role[] {
     )
 }
 
-export async function signIn(
+export async function forceChangePassword(
   _prevState: ActionResponse<{ redirectTo: string }>,
   formData: FormData
 ): Promise<ActionResponse<{ redirectTo: string }>> {
   const rawData = {
-    email: formData.get('email'),
     password: formData.get('password')
   }
 
-  const validated = signInSchema.safeParse(rawData)
+  const session = formData.get('session') as string
+  const email = formData.get('email') as string
+
+  if (!session || !email) {
+    return { success: false, error: 'Sesión inválida o expirada. Por favor, inicia sesión nuevamente.' }
+  }
+
+  const validated = forceChangePasswordSchema.safeParse(rawData)
 
   if (!validated.success) {
     const firstIssue = validated.error.issues[0]
     return { success: false, error: firstIssue?.message || AUTH_ERRORS.UNKNOWN }
   }
 
-  const { email, password } = validated.data
+  const { password } = validated.data
 
   try {
-    const command = new InitiateAuthCommand({
-      AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
+    const command = new RespondToAuthChallengeCommand({
+      ChallengeName: 'NEW_PASSWORD_REQUIRED',
       ClientId: COGNITO.CLIENT_ID,
-      AuthParameters: {
+      Session: session,
+      ChallengeResponses: {
         USERNAME: email,
-        PASSWORD: password
+        NEW_PASSWORD: password
       }
     })
 
     const response = await cognitoClient.send(command)
-
-    if (response.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
-      return {
-        success: true,
-        data: {
-          redirectTo: '/force-change-password',
-          session: response.Session,
-          email: email
-        }
-      } as any
-    }
 
     if (!response.AuthenticationResult?.IdToken) {
       return { success: false, error: AUTH_ERRORS.UNKNOWN }
@@ -74,7 +68,6 @@ export async function signIn(
 
     const { IdToken, RefreshToken } = response.AuthenticationResult
 
-    // Decodificar el idToken para obtener roles y tenantId
     const payload = decodeJwt<CognitoJWTPayload>(IdToken)
     const roles = normalizeRoles(payload['cognito:groups'])
     const tenantId = payload['custom:tenant_id'] ?? null
@@ -93,7 +86,6 @@ export async function signIn(
       cookieStore.set(AUTH_COOKIES.REFRESH_TOKEN, RefreshToken, cookieOptions)
     }
 
-    // Si no tiene tenant → ir al setup de empresa
     if (!tenantId) {
       return { success: true, data: { redirectTo: '/tenant-setup' } }
     }
@@ -110,11 +102,7 @@ export async function signIn(
 
     return { success: true, data: { redirectTo } }
   } catch (error) {
-    console.error('Sign in error:', error)
-
-    if (error instanceof UserNotConfirmedException) {
-      return { success: false, error: AUTH_ERRORS.EMAIL_NOT_CONFIRMED }
-    }
+    console.error('Force change password error:', error)
 
     if (error instanceof NotAuthorizedException) {
       return { success: false, error: AUTH_ERRORS.INVALID_CREDENTIALS }
