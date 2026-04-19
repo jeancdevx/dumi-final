@@ -1,39 +1,30 @@
-import 'server-only'
-
 import { fetchWithAuth } from '@/lib/fetch'
-
 import type { Client } from './types'
 
 export async function getClients(): Promise<Client[]> {
   try {
-    const data = await fetchWithAuth<Client[]>('/customers')
-    return data
-  } catch {
+    return await fetchWithAuth<Client[]>('/customers')
+  } catch (error: any) {
+    if (error?.status === 404) return []
+    console.error('Error fetching clients:', error)
     return []
   }
 }
 
-export interface SearchClientsParams {
+export async function searchClients(params: {
   names?: string
   lastnames?: string
   phone?: string
-}
-
-export async function searchClients(
-  params: SearchClientsParams
-): Promise<Client[]> {
+}): Promise<Client[]> {
   try {
-    const searchParams = new URLSearchParams()
+    const query = new URLSearchParams()
+    if (params.names) query.append('names', params.names)
+    if (params.lastnames) query.append('lastnames', params.lastnames)
+    if (params.phone) query.append('phone', params.phone)
 
-    if (params.names) searchParams.set('names', params.names)
-    if (params.lastnames) searchParams.set('lastnames', params.lastnames)
-    if (params.phone) searchParams.set('phone', params.phone)
-
-    const data = await fetchWithAuth<Client[]>(
-      `/customers/search?${searchParams.toString()}`
-    )
-    return data
-  } catch {
+    return await fetchWithAuth<Client[]>(`/customers/search?${query.toString()}`)
+  } catch (error) {
+    console.error('Error searching clients:', error)
     return []
   }
 }

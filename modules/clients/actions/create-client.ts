@@ -1,15 +1,11 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-
+import { fetchWithAuth } from '@/lib/fetch'
 import type { ActionResponse } from '@/modules/auth/types'
-
 import { CLIENT_ERRORS } from '../constants'
 import { createClientSchema } from '../schemas'
 import type { CreateClientResponse } from '../types'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export async function createClient(
   _prevState: ActionResponse<CreateClientResponse>,
@@ -39,34 +35,11 @@ export async function createClient(
     body.reference = reference
   }
 
-  const cookieStore = await cookies()
-  const idToken = cookieStore.get("telar.idToken")?.value
-  if (!idToken) return { success: false, error: "No session" }
   try {
-    const response = await fetch(`${API_URL}/customers`, {
+    const data = await fetchWithAuth<CreateClientResponse>('/customers', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`
-      },
       body: JSON.stringify(body)
     })
-
-    if (response.status === 409) {
-      return {
-        success: false,
-        error: CLIENT_ERRORS.PHONE_EXISTS
-      }
-    }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: CLIENT_ERRORS.UNKNOWN
-      }
-    }
-
-    const data: CreateClientResponse = await response.json()
 
     revalidatePath('/admin/clients')
 
@@ -74,11 +47,10 @@ export async function createClient(
       success: true,
       data
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create client error:', error)
-    return {
-      success: false,
-      error: CLIENT_ERRORS.UNKNOWN
-    }
+    if (error?.status === 409) return { success: false, error: CLIENT_ERRORS.PHONE_EXISTS }
+    if (error?.status === 400) return { success: false, error: CLIENT_ERRORS.INVALID_DATA }
+    return { success: false, error: CLIENT_ERRORS.UNKNOWN }
   }
 }

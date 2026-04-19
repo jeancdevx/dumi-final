@@ -40,7 +40,7 @@ interface EditClientFormProps {
   client: Client
 }
 
-const initialState: ActionResponse = {
+const initialState: ActionResponse<Client> = {
   success: false
 }
 
@@ -48,10 +48,9 @@ export function EditClientForm({ client }: EditClientFormProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const prevSuccessRef = useRef(false)
 
-  const updateClientWithId = updateClient.bind(null, client.id)
-
   const [state, formAction, isPending] = useActionState(
-    updateClientWithId,
+    (prevState: ActionResponse<Client>, formData: FormData) =>
+      updateClient(client.id, prevState, formData),
     initialState
   )
 
