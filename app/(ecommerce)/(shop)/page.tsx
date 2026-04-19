@@ -4,7 +4,7 @@ import { getCatalog } from '@/modules/ecommerce/catalog/actions/get-catalog'
 import { CatalogGrid } from '@/modules/ecommerce/catalog/ui/components/catalog-grid'
 
 export const metadata: Metadata = {
-  title: 'Catálogo | DUMI',
+  title: 'Catálogo | TELAR',
   description: 'Explora nuestra colección de prendas personalizadas'
 }
 

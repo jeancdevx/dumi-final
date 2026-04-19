@@ -14,8 +14,8 @@ import {
 } from '@/components/ui/card'
 
 export const metadata: Metadata = {
-  title: 'Iniciar sesión | DUMI',
-  description: 'Inicia sesión en tu cuenta de DUMI'
+  title: 'Iniciar sesión | TELAR',
+  description: 'Inicia sesión en tu cuenta de TELAR'
 }
 
 export default async function CustomerSignInPage() {

@@ -15,20 +15,15 @@ export async function fetchWithAuth<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get(AUTH_COOKIES.ACCESS_TOKEN)?.value
-  const antiCsrf = cookieStore.get(AUTH_COOKIES.ANTI_CSRF)?.value
+  const idToken = cookieStore.get(AUTH_COOKIES.ID_TOKEN)?.value
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers
   }
 
-  if (accessToken) {
-    headers['Cookie'] = `${AUTH_COOKIES.ACCESS_TOKEN}=${accessToken}`
-  }
-
-  if (antiCsrf) {
-    headers['anti-csrf'] = antiCsrf
+  if (idToken) {
+    headers['Authorization'] = `Bearer ${idToken}`
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {

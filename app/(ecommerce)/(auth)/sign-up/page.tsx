@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/card'
 
 export const metadata: Metadata = {
-  title: 'Crear cuenta | DUMI',
-  description: 'Crea tu cuenta para comprar en DUMI'
+  title: 'Crear cuenta | TELAR',
+  description: 'Crea tu cuenta para comprar en TELAR'
 }
 
 export default function SignUpPage() {

@@ -1,9 +1,8 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 
-import { AUTH_COOKIES } from '@/modules/auth/constants'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { EMPLOYEE_ERRORS } from '../constants'
@@ -20,7 +19,7 @@ export async function createEmployee(
     names: formData.get('names'),
     lastNames: formData.get('lastNames'),
     email: formData.get('email'),
-    password: formData.get('password')
+    role: formData.get('role')
   }
 
   const validatedFields = createEmployeeSchema.safeParse(rawData)
@@ -34,24 +33,49 @@ export async function createEmployee(
   }
 
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get(AUTH_COOKIES.ACCESS_TOKEN)?.value
-  const antiCsrf = cookieStore.get(AUTH_COOKIES.ANTI_CSRF)?.value
+  const idToken = cookieStore.get('telar.idToken')?.value
+  if (!idToken) return { success: false, error: 'No session' }
+
+  const payload = validatedFields.data
 
   try {
     const response = await fetch(`${API_URL}/admin/employees`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `${AUTH_COOKIES.ACCESS_TOKEN}=${accessToken}`,
-        'anti-csrf': antiCsrf || ''
+        Authorization: `Bearer ${idToken}`
       },
-      body: JSON.stringify(validatedFields.data)
+      body: JSON.stringify(payload)
     })
 
     if (response.status === 409) {
       return {
         success: false,
         error: EMPLOYEE_ERRORS.EMAIL_ALREADY_EXISTS
+      }
+    }
+
+    if (response.status === 400) {
+      const errorBody = await response.json().catch(() => ({}))
+      const message = Array.isArray(errorBody?.message)
+        ? errorBody.message[0]
+        : errorBody?.message
+
+      return {
+        success: false,
+        error: message || EMPLOYEE_ERRORS.UNKNOWN
+      }
+    }
+
+    if (response.status === 403) {
+      const errorBody = await response.json().catch(() => ({}))
+      const message = Array.isArray(errorBody?.message)
+        ? errorBody.message[0]
+        : errorBody?.message
+
+      return {
+        success: false,
+        error: message || 'Only an owner can create an admin employee.'
       }
     }
 

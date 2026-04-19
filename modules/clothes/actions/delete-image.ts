@@ -1,9 +1,8 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 
-import { AUTH_COOKIES } from '@/modules/auth/constants'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { CLOTHES_ERRORS } from '../constants'
@@ -14,9 +13,6 @@ export async function deleteImage(
   clothesId: string,
   url: string
 ): Promise<ActionResponse<null>> {
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(AUTH_COOKIES.ACCESS_TOKEN)?.value
-  const antiCsrf = cookieStore.get(AUTH_COOKIES.ANTI_CSRF)?.value
 
   console.log('[deleteImage] Starting delete for:', { clothesId, url })
   console.log(
@@ -24,13 +20,15 @@ export async function deleteImage(
     `${API_URL}/clothes/${clothesId}/images`
   )
 
+  const cookieStore = await cookies()
+  const idToken = cookieStore.get("telar.idToken")?.value
+  if (!idToken) return { success: false, error: "No session" }
   try {
     const response = await fetch(`${API_URL}/clothes/${clothesId}/images`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `${AUTH_COOKIES.ACCESS_TOKEN}=${accessToken}`,
-        'anti-csrf': antiCsrf || ''
+        Authorization: `Bearer ${idToken}`
       },
       body: JSON.stringify({ url }),
       credentials: 'include'

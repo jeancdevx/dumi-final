@@ -2,17 +2,15 @@
 
 import { useActionState, useEffect, useState, useTransition } from 'react'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { EyeIcon, EyeOffIcon, MailIcon, OctagonAlertIcon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon, OctagonAlertIcon } from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { resendCode } from '@/modules/auth/actions/resend-code'
-import { signIn } from '@/modules/auth/actions/sign-in'
-import { signInSchema, type SignInInput } from '@/modules/auth/schemas'
+import { forceChangePassword } from '@/modules/auth/actions/force-change-password'
+import { forceChangePasswordSchema, type ForceChangePasswordInput } from '@/modules/auth/schemas'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -21,40 +19,28 @@ import { Input } from '@/components/ui/input'
 
 const initialState: ActionResponse<{ redirectTo: string }> = { success: false }
 
-export function SignInForm() {
+export function ForceChangePasswordForm() {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(signIn, initialState)
+  const [state, formAction, isPending] = useActionState(forceChangePassword, initialState)
   const [showPassword, setShowPassword] = useState(false)
+  const [sessionError, setSessionError] = useState<string | null>(null)
 
-  const form = useForm<SignInInput>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' }
+  const emailInfo = typeof window !== 'undefined' ? window.sessionStorage.getItem('auth.challengeEmail') : null
+
+  const form = useForm<ForceChangePasswordInput>({
+    resolver: zodResolver(forceChangePasswordSchema),
+    defaultValues: { password: '' }
   })
 
   const [isTransitioning, startTransition] = useTransition()
 
   useEffect(() => {
     if (state.success && state.data?.redirectTo) {
-      if (state.data.redirectTo === '/force-change-password') {
-        const anyData = state.data as any;
-        window.sessionStorage.setItem('auth.challengeEmail', anyData.email)
-        window.sessionStorage.setItem('auth.challengeSession', anyData.session)
-      }
+      window.sessionStorage.removeItem('auth.challengeEmail')
+      window.sessionStorage.removeItem('auth.challengeSession')
       router.push(state.data.redirectTo)
-    } else if (state.error === 'Debes confirmar tu correo antes de iniciar sesión') {
-      const email = form.getValues('email')
-      if (email) {
-        window.sessionStorage.setItem('auth.pendingVerificationEmail', email)
-        // Automatically trigger server action
-        resendCode(email).then(() => {
-          router.push('/register')
-        }).catch(err => {
-          console.error(err)
-          router.push('/register')
-        })
-      }
     }
-  }, [state, router, form])
+  }, [state, router])
 
   return (
     <div className='relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#faf9f8] p-6'>
@@ -70,73 +56,55 @@ export function SignInForm() {
         <div className='rounded-xl border border-[#d3c3bb]/20 bg-white p-8 shadow-[0_8px_24px_rgba(43,22,8,0.06)] md:p-10'>
           <div className='mb-8'>
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-[#2b1608]'>
-              Iniciar sesión
+              Cambiar contraseña
             </h1>
-            <p className='text-sm text-[#50453f]'>Bienvenido de nuevo a Telar.</p>
+            <p className='text-sm text-[#50453f]'>
+              Por seguridad, debes crear una nueva contraseña para la cuenta {emailInfo ? <b>{emailInfo}</b> : ''}.
+            </p>
           </div>
 
           <form
-            id='sign-in-form'
+            id='force-change-password-form'
             className='space-y-6'
             onSubmit={form.handleSubmit(data => {
+              const session = window.sessionStorage.getItem('auth.challengeSession')
+              const email = window.sessionStorage.getItem('auth.challengeEmail')
+
+              if (!session || !email) {
+                setSessionError('No se encontró la sesión activa. Por favor, intenta iniciar sesión nuevamente.')
+                return
+              }
+
+              setSessionError(null)
+
               startTransition(() => {
                 const formData = new FormData()
-                formData.append('email', data.email)
                 formData.append('password', data.password)
+                formData.append('session', session)
+                formData.append('email', email)
                 formAction(formData)
               })
             })}
           >
-            <Controller
-              name='email'
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <label
-                    htmlFor='email'
-                    className='block text-sm font-medium text-[#50453f]'
-                  >
-                    Correo electrónico
-                  </label>
-                  <div className='relative'>
-                    <MailIcon className='pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#82746e]' />
-                    <Input
-                      {...field}
-                      id='email'
-                      name='email'
-                      type='email'
-                      placeholder='tu@ejemplo.com'
-                      autoComplete='email'
-                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pl-11'
-                      aria-invalid={fieldState.invalid}
-                    />
-                  </div>
-                  {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
-                  )}
-                </div>
-              )}
-            />
-
             <Controller
               name='password'
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
                   <label
-                    htmlFor='sign-in-password'
+                    htmlFor='new-password'
                     className='block text-sm font-medium text-[#50453f]'
                   >
-                    Contraseña
+                    Nueva contraseña
                   </label>
                   <div className='relative'>
                     <Input
                       {...field}
-                      id='sign-in-password'
+                      id='new-password'
                       name='password'
                       type={showPassword ? 'text' : 'password'}
                       placeholder='••••••••'
-                      autoComplete='current-password'
+                      autoComplete='new-password'
                       className='h-12 rounded-lg border-[#d3c3bb] bg-white pr-12'
                       aria-invalid={fieldState.invalid}
                     />
@@ -162,32 +130,32 @@ export function SignInForm() {
               )}
             />
 
-            {state.error && (
+            {(state.error || sessionError) && (
               <Alert variant='destructive' className='bg-red-50'>
                 <OctagonAlertIcon className='size-4' />
-                <AlertDescription>{state.error}</AlertDescription>
+                <AlertDescription>{state.error || sessionError}</AlertDescription>
               </Alert>
             )}
 
             <Button
               type='submit'
-              form='sign-in-form'
+              form='force-change-password-form'
               disabled={isPending || isTransitioning}
               className='h-12 w-full rounded-xl bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] text-base font-bold text-white hover:opacity-95'
             >
-              {isPending || isTransitioning ? 'Iniciando sesión...' : 'Ingresar'}
+              {isPending || isTransitioning ? 'Actualizando...' : 'Actualizar contraseña'}
             </Button>
           </form>
 
-          <p className='mt-8 border-t border-[#d3c3bb]/30 pt-8 text-center text-sm text-[#50453f]'>
-            ¿Aún no tienes una cuenta?{' '}
-            <Link
-              href='/register'
-              className='font-bold text-[#2b1608] transition-colors hover:text-[#5c4130]'
+          <div className='mt-6 text-center'>
+            <Button
+              variant='link'
+              onClick={() => router.push('/sign-in')}
+              className='text-sm text-[#50453f] hover:text-[#2b1608]'
             >
-              Crear una cuenta
-            </Link>
-          </p>
+              Volver al inicio de sesión
+            </Button>
+          </div>
         </div>
       </div>
     </div>

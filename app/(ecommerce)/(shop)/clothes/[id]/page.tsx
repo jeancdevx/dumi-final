@@ -16,13 +16,13 @@ export async function generateMetadata({
 
   if (!result.success || !result.data) {
     return {
-      title: 'Producto no encontrado | DUMI'
+      title: 'Producto no encontrado | TELAR'
     }
   }
 
   return {
-    title: `${result.data.name} | DUMI`,
-    description: result.data.description || 'Prenda personalizada de DUMI'
+    title: `${result.data.name} | TELAR`,
+    description: result.data.description || 'Prenda personalizada de TELAR'
   }
 }
 
