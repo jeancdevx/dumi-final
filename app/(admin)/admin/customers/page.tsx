@@ -1,28 +1,19 @@
 import { Suspense } from 'react'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { UserPlus } from 'lucide-react'
+import { CreateClientForm } from '@/modules/clients/ui/components/create-client-form'
 
-import { getCustomers } from '@/modules/customers/actions'
-import { CustomerTable } from '@/modules/customers/components/CustomerTable'
-import { CreateCustomerForm } from '@/modules/customers/components/CreateCustomerForm'
+import { getClients } from '@/modules/clients/queries'
+import { ClientsTable } from '@/modules/clients/ui/components/clients-table'
 
 // ─── Componente async que carga los datos en el servidor ─────────────────────
 async function CustomersContent() {
-  const customers = await getCustomers()
-  return <CustomerTable initialCustomers={customers} />
+  const clients = await getClients()
+  return <ClientsTable clients={clients} />
 }
 
 // ─── Skeleton mientras se carga la tabla ─────────────────────────────────────
-function CustomerTableSkeleton() {
+function ClientsTableSkeleton() {
   return (
     <div className="space-y-3">
       <Skeleton className="h-10 w-80" />
@@ -61,24 +52,11 @@ export default function CustomersPage() {
           </p>
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Nuevo cliente
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Crear nuevo cliente</DialogTitle>
-            </DialogHeader>
-            <CreateCustomerForm />
-          </DialogContent>
-        </Dialog>
+        <CreateClientForm />
       </div>
 
       {/* Tabla con Suspense */}
-      <Suspense fallback={<CustomerTableSkeleton />}>
+      <Suspense fallback={<ClientsTableSkeleton />}>
         <CustomersContent />
       </Suspense>
     </div>
