@@ -12,8 +12,10 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator
+  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+
+export const dynamic = 'force-dynamic'
 
 export default async function NewQuotationPage() {
   const [clients, clothes] = await Promise.all([
