@@ -10,3 +10,14 @@ export const createEmployeeSchema = z.object({
 })
 
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>
+
+export const updateEmployeeProfileSchema = z.object({
+  names: z.string().min(2, 'Los nombres deben tener al menos 2 caracteres'),
+  lastNames: z
+    .string()
+    .min(2, 'Los apellidos deben tener al menos 2 caracteres')
+})
+
+export type UpdateEmployeeProfileInput = z.infer<
+  typeof updateEmployeeProfileSchema
+>
