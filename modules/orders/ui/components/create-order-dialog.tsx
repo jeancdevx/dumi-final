@@ -43,8 +43,7 @@ import {
 import { createOrder } from '../../actions'
 import {
   DELIVERY_DATE_MAX_DAYS,
-  DELIVERY_DATE_MIN_DAYS,
-  FIXED_DEPARTMENT
+  DELIVERY_DATE_MIN_DAYS
 } from '../../constants'
 import {
   createOrderDefaultValues,
@@ -74,7 +73,7 @@ export function CreateOrderDialog({
       ...createOrderDefaultValues,
       quoteId,
       address: {
-        department: FIXED_DEPARTMENT,
+        department: '',
         city: '',
         district: '',
         street: ''
@@ -82,7 +81,10 @@ export function CreateOrderDialog({
     }
   })
 
-  const today = startOfDay(new Date())
+  // Obtiene el "hoy" en la zona horaria de Lima para las validaciones
+  const limaStr = new Date().toLocaleString('en-US', { timeZone: 'America/Lima' })
+  const today = startOfDay(new Date(limaStr))
+  
   const minDate = addDays(today, DELIVERY_DATE_MIN_DAYS)
   const maxDate = addDays(today, DELIVERY_DATE_MAX_DAYS)
 
@@ -90,7 +92,7 @@ export function CreateOrderDialog({
     startTransition(async () => {
       const result = await createOrder({
         quoteId: values.quoteId,
-        deliveryDate: values.deliveryDate.toISOString(),
+        deliveryDate: format(values.deliveryDate, 'yyyy-MM-dd'),
         address: {
           department: values.address.department,
           city: values.address.city,
