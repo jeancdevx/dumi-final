@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'assets-dumi-dev.edducode.me'
+        hostname: '**.amazonaws.com'
       }
     ]
   }
