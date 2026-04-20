@@ -89,7 +89,6 @@ export function ClothesTable({
             <TableHead className='w-20'>Imagen</TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead>Precio Base</TableHead>
-            <TableHead>E-commerce</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className='w-[50px]'></TableHead>
           </TableRow>
@@ -124,20 +123,6 @@ export function ClothesTable({
                   </Link>
                 </TableCell>
                 <TableCell>{formatPrice(item.price)}</TableCell>
-                <TableCell>
-                  {item.isInEcommerce ? (
-                    <Badge className='bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400'>
-                      En tienda
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant='secondary'
-                      className='text-muted-foreground'
-                    >
-                      No publicado
-                    </Badge>
-                  )}
-                </TableCell>
                 <TableCell>
                   {item.isDraft ? (
                     <Badge
