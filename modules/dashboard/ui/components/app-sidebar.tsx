@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
 import {
   ChevronRight,
   ChevronsUpDown,
@@ -13,12 +12,12 @@ import {
   Settings,
   Shirt,
   UserRound,
-  Users
+  Users,
+  UserCircle
 } from 'lucide-react'
 
 import { signOut } from '@/modules/auth/actions/sign-out'
 import type { Role } from '@/modules/auth/types'
-
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Collapsible,
@@ -151,9 +150,9 @@ const sellerNavGroups: NavGroup[] = [
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
-
   const isAdmin = user.roles.includes('owner') || user.roles.includes('admin')
   const navGroups = isAdmin ? adminNavGroups : sellerNavGroups
+  const profileHref = isAdmin ? '/admin/profile' : '/seller/profile'
 
   const initials =
     `${user.names.charAt(0)}${user.lastNames.charAt(0)}`.toUpperCase()
@@ -235,6 +234,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
             align='start'
             sideOffset={8}
           >
+            {/* Info del usuario */}
             <div className='p-3'>
               <div className='flex items-center gap-3'>
                 <Avatar className='h-10 w-10'>
@@ -243,16 +243,30 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className='flex flex-col overflow-hidden'>
-                  <span className='truncate text-sm font-medium'>
-                    {fullName}
-                  </span>
+                  <span className='truncate text-sm font-medium'>{fullName}</span>
                   <span className='text-muted-foreground truncate text-xs'>
                     {user.email}
                   </span>
                 </div>
               </div>
             </div>
+
             <Separator />
+
+            {/* Link a Mi perfil */}
+            <div className='p-1'>
+              <Link
+                href={profileHref}
+                className='hover:bg-accent flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
+              >
+                <UserCircle className='h-4 w-4' />
+                <span>Mi perfil</span>
+              </Link>
+            </div>
+
+            <Separator />
+
+            {/* Cerrar sesión */}
             <div className='p-1'>
               <form action={signOut} className='w-full'>
                 <button
