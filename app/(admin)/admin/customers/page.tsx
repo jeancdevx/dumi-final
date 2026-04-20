@@ -6,6 +6,8 @@ import { CreateClientForm } from '@/modules/clients/ui/components/create-client-
 import { getClients } from '@/modules/clients/queries'
 import { ClientsTable } from '@/modules/clients/ui/components/clients-table'
 
+export const dynamic = 'force-dynamic'
+
 // ─── Componente async que carga los datos en el servidor ─────────────────────
 async function CustomersContent() {
   const clients = await getClients()
