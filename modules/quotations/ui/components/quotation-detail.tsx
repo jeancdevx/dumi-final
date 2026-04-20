@@ -9,6 +9,8 @@ import { format } from 'date-fns'
 import { QUOTATION_STATUSES } from '@/modules/quotations/constants'
 import type { QuotationWithDetails } from '@/modules/quotations/types'
 
+import { CreateOrderDialog } from '@/modules/orders/ui/components/create-order-dialog'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -245,6 +247,18 @@ export function QuotationDetail({ quotation }: QuotationDetailProps) {
               </p>
               <p>{format(new Date(quotation.updatedAt), 'dd/MM/yyyy HH:mm')}</p>
             </div>
+
+            {quotation.status === 'PENDING' && (
+              <div className='pt-3 border-t'>
+                <CreateOrderDialog
+                  quoteId={quotation.id}
+                  quotationCode={quotation.id.slice(0, 8).toUpperCase()}
+                  trigger={
+                    <Button className='w-full'>Aprobar y Generar Orden</Button>
+                  }
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
