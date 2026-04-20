@@ -268,6 +268,13 @@ export function SignUpForm() {
                         {signUpForm.formState.errors.password.message}
                       </p>
                     )}
+                    <div className='text-xs text-[#7d7068] mt-2 leading-relaxed'>
+                      <p>* Debe incluir al menos 12 caracteres, donde al menos tenga:</p>
+                      <p>* Una minúscula</p>
+                      <p>* Una mayúscula</p>
+                      <p>* Un número</p>
+                      <p>* Un símbolo</p>
+                    </div>
                   </div>
                 </div>
 
