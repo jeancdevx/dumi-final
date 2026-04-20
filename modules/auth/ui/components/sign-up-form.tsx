@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { EyeIcon, EyeOffIcon, OctagonAlertIcon } from 'lucide-react'
+import { CheckIcon, EyeIcon, EyeOffIcon, OctagonAlertIcon } from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
@@ -60,6 +60,15 @@ export function SignUpForm() {
     defaultValues: { email: '', code: '' }
   })
   const otpCode = otpForm.watch('code')
+  const signupPassword = signUpForm.watch('password') || ''
+
+  const reqs = {
+    length: signupPassword.length >= 12,
+    lowercase: /[a-z]/.test(signupPassword),
+    uppercase: /[A-Z]/.test(signupPassword),
+    number: /[0-9]/.test(signupPassword),
+    symbol: /[^A-Za-z0-9]/.test(signupPassword)
+  }
 
   useEffect(() => {
     const storedEmail = window.sessionStorage.getItem(PENDING_EMAIL_STORAGE_KEY)
@@ -268,12 +277,15 @@ export function SignUpForm() {
                         {signUpForm.formState.errors.password.message}
                       </p>
                     )}
-                    <div className='text-xs text-[#7d7068] mt-2 leading-relaxed'>
-                      <p>* Debe incluir al menos 12 caracteres, donde al menos tenga:</p>
-                      <p>* Una minúscula</p>
-                      <p>* Una mayúscula</p>
-                      <p>* Un número</p>
-                      <p>* Un símbolo</p>
+                    <div className='mt-2 text-xs leading-relaxed'>
+                      <p className='mb-1.5 font-medium text-[#50453f]'>Debe incluir al menos:</p>
+                      <ul className='space-y-1.5'>
+                        <RequirementItem met={reqs.length} text='12 caracteres' />
+                        <RequirementItem met={reqs.lowercase} text='Una minúscula' />
+                        <RequirementItem met={reqs.uppercase} text='Una mayúscula' />
+                        <RequirementItem met={reqs.number} text='Un número' />
+                        <RequirementItem met={reqs.symbol} text='Un símbolo' />
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -448,5 +460,20 @@ export function SignUpForm() {
         </div>
       </div>
     </div>
+  )
+}
+
+function RequirementItem({ met, text }: { met: boolean; text: string }) {
+  return (
+    <li className='flex items-center gap-2'>
+      <div
+        className={`flex h-3.5 w-3.5 items-center justify-center rounded-[3px] border ${
+          met ? 'border-[#5c4130] bg-[#5c4130] text-white' : 'border-[#d3c3bb] bg-transparent'
+        }`}
+      >
+        {met && <CheckIcon className='size-2.5' strokeWidth={4} />}
+      </div>
+      <span className={met ? 'font-medium text-[#5c4130]' : 'text-[#7d7068]'}>{text}</span>
+    </li>
   )
 }
