@@ -1,18 +1,17 @@
 'use client'
 
-import { useActionState, useEffect, useState, useTransition } from 'react'
+import { useActionState, useEffect, useTransition } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { EyeIcon, EyeOffIcon, MailIcon, OctagonAlertIcon } from 'lucide-react'
+import { MailIcon, OctagonAlertIcon } from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { resendCode } from '@/modules/auth/actions/resend-code'
-import { signIn } from '@/modules/auth/actions/sign-in'
-import { signInSchema, type SignInInput } from '@/modules/auth/schemas'
+import { forgotPassword } from '@/modules/auth/actions/forgot-password'
+import { forgotPasswordSchema, type ForgotPasswordInput } from '@/modules/auth/schemas'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -21,38 +20,21 @@ import { Input } from '@/components/ui/input'
 
 const initialState: ActionResponse<{ redirectTo: string }> = { success: false }
 
-export function SignInForm() {
+export function ForgotPasswordForm() {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(signIn, initialState)
-  const [showPassword, setShowPassword] = useState(false)
+  const [state, formAction, isPending] = useActionState(forgotPassword, initialState)
 
-  const form = useForm<SignInInput>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' }
+  const form = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: '' }
   })
 
   const [isTransitioning, startTransition] = useTransition()
 
   useEffect(() => {
     if (state.success && state.data?.redirectTo) {
-      if (state.data.redirectTo === '/force-change-password') {
-        const anyData = state.data as any;
-        window.sessionStorage.setItem('auth.challengeEmail', anyData.email)
-        window.sessionStorage.setItem('auth.challengeSession', anyData.session)
-      }
+      window.sessionStorage.setItem('auth.resetPasswordEmail', form.getValues('email'))
       router.push(state.data.redirectTo)
-    } else if (state.error === 'Debes confirmar tu correo antes de iniciar sesión') {
-      const email = form.getValues('email')
-      if (email) {
-        window.sessionStorage.setItem('auth.pendingVerificationEmail', email)
-        // Automatically trigger server action
-        resendCode(email).then(() => {
-          router.push('/register')
-        }).catch(err => {
-          console.error(err)
-          router.push('/register')
-        })
-      }
     }
   }, [state, router, form])
 
@@ -70,19 +52,18 @@ export function SignInForm() {
         <div className='rounded-xl border border-[#d3c3bb]/20 bg-white p-8 shadow-[0_8px_24px_rgba(43,22,8,0.06)] md:p-10'>
           <div className='mb-8'>
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-[#2b1608]'>
-              Iniciar sesión
+              Recuperar contraseña
             </h1>
-            <p className='text-sm text-[#50453f]'>Bienvenido de nuevo a Telar.</p>
+            <p className='text-sm text-[#50453f]'>Ingresa tu correo para recibir un código de recuperación.</p>
           </div>
 
           <form
-            id='sign-in-form'
+            id='forgot-password-form'
             className='space-y-6'
             onSubmit={form.handleSubmit(data => {
               startTransition(() => {
                 const formData = new FormData()
                 formData.append('email', data.email)
-                formData.append('password', data.password)
                 formAction(formData)
               })
             })}
@@ -118,58 +99,6 @@ export function SignInForm() {
               )}
             />
 
-            <Controller
-              name='password'
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between'>
-                    <label
-                      htmlFor='sign-in-password'
-                      className='block text-sm font-medium text-[#50453f]'
-                    >
-                      Contraseña
-                    </label>
-                    <Link
-                      href='/forgot-password'
-                      className='text-sm font-medium text-[#2b1608] hover:text-[#5c4130]'
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
-                  </div>
-                  <div className='relative'>
-                    <Input
-                      {...field}
-                      id='sign-in-password'
-                      name='password'
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder='••••••••'
-                      autoComplete='current-password'
-                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pr-12'
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='absolute top-0 right-0 h-full px-3 hover:bg-transparent'
-                      onClick={() => setShowPassword(prev => !prev)}
-                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    >
-                      {showPassword ? (
-                        <EyeOffIcon className='h-4 w-4 text-[#50453f]' />
-                      ) : (
-                        <EyeIcon className='h-4 w-4 text-[#50453f]' />
-                      )}
-                    </Button>
-                  </div>
-                  {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
-                  )}
-                </div>
-              )}
-            />
-
             {state.error && (
               <Alert variant='destructive' className='bg-red-50'>
                 <OctagonAlertIcon className='size-4' />
@@ -179,21 +108,21 @@ export function SignInForm() {
 
             <Button
               type='submit'
-              form='sign-in-form'
+              form='forgot-password-form'
               disabled={isPending || isTransitioning}
               className='h-12 w-full rounded-xl bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] text-base font-bold text-white hover:opacity-95'
             >
-              {isPending || isTransitioning ? 'Iniciando sesión...' : 'Ingresar'}
+              {isPending || isTransitioning ? 'Enviando...' : 'Enviar código'}
             </Button>
           </form>
 
           <p className='mt-8 border-t border-[#d3c3bb]/30 pt-8 text-center text-sm text-[#50453f]'>
-            ¿Aún no tienes una cuenta?{' '}
+            ¿Recordaste tu contraseña?{' '}
             <Link
-              href='/register'
+              href='/sign-in'
               className='font-bold text-[#2b1608] transition-colors hover:text-[#5c4130]'
             >
-              Crear una cuenta
+              Iniciar sesión
             </Link>
           </p>
         </div>

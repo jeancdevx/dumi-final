@@ -5,56 +5,59 @@ import { useActionState, useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { EyeIcon, EyeOffIcon, MailIcon, OctagonAlertIcon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon, KeyRoundIcon, OctagonAlertIcon } from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { resendCode } from '@/modules/auth/actions/resend-code'
-import { signIn } from '@/modules/auth/actions/sign-in'
-import { signInSchema, type SignInInput } from '@/modules/auth/schemas'
+import { resetPassword } from '@/modules/auth/actions/reset-password'
+import { resetPasswordSchema, type ResetPasswordInput } from '@/modules/auth/schemas'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp'
 
 const initialState: ActionResponse<{ redirectTo: string }> = { success: false }
 
-export function SignInForm() {
+export function ResetPasswordForm() {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(signIn, initialState)
+  const [state, formAction, isPending] = useActionState(resetPassword, initialState)
   const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
 
-  const form = useForm<SignInInput>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' }
+  const form = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { email: '', code: '', password: '' }
   })
+
+  useEffect(() => {
+    const savedEmail = window.sessionStorage.getItem('auth.resetPasswordEmail')
+    if (savedEmail) {
+      setEmail(savedEmail)
+      form.setValue('email', savedEmail)
+    } else {
+      router.push('/forgot-password')
+    }
+  }, [form, router])
 
   const [isTransitioning, startTransition] = useTransition()
 
   useEffect(() => {
     if (state.success && state.data?.redirectTo) {
-      if (state.data.redirectTo === '/force-change-password') {
-        const anyData = state.data as any;
-        window.sessionStorage.setItem('auth.challengeEmail', anyData.email)
-        window.sessionStorage.setItem('auth.challengeSession', anyData.session)
-      }
+      window.sessionStorage.removeItem('auth.resetPasswordEmail')
       router.push(state.data.redirectTo)
-    } else if (state.error === 'Debes confirmar tu correo antes de iniciar sesión') {
-      const email = form.getValues('email')
-      if (email) {
-        window.sessionStorage.setItem('auth.pendingVerificationEmail', email)
-        // Automatically trigger server action
-        resendCode(email).then(() => {
-          router.push('/register')
-        }).catch(err => {
-          console.error(err)
-          router.push('/register')
-        })
-      }
     }
-  }, [state, router, form])
+  }, [state, router])
+
+  if (!email) {
+    return null
+  }
 
   return (
     <div className='relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#faf9f8] p-6'>
@@ -70,46 +73,47 @@ export function SignInForm() {
         <div className='rounded-xl border border-[#d3c3bb]/20 bg-white p-8 shadow-[0_8px_24px_rgba(43,22,8,0.06)] md:p-10'>
           <div className='mb-8'>
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-[#2b1608]'>
-              Iniciar sesión
+              Restablecer contraseña
             </h1>
-            <p className='text-sm text-[#50453f]'>Bienvenido de nuevo a Telar.</p>
+            <p className='text-sm text-[#50453f]'>Ingresa el código enviado a tu correo y tu nueva contraseña.</p>
           </div>
 
           <form
-            id='sign-in-form'
+            id='reset-password-form'
             className='space-y-6'
             onSubmit={form.handleSubmit(data => {
               startTransition(() => {
                 const formData = new FormData()
                 formData.append('email', data.email)
+                formData.append('code', data.code)
                 formData.append('password', data.password)
                 formAction(formData)
               })
             })}
           >
             <Controller
-              name='email'
+              name='code'
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
-                  <label
-                    htmlFor='email'
-                    className='block text-sm font-medium text-[#50453f]'
-                  >
-                    Correo electrónico
+                  <label className='block text-sm font-medium text-[#50453f]'>
+                    Código de verificación
                   </label>
-                  <div className='relative'>
-                    <MailIcon className='pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#82746e]' />
-                    <Input
-                      {...field}
-                      id='email'
-                      name='email'
-                      type='email'
-                      placeholder='tu@ejemplo.com'
-                      autoComplete='email'
-                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pl-11'
-                      aria-invalid={fieldState.invalid}
-                    />
+                  <div className='flex justify-center'>
+                    <InputOTP
+                      maxLength={6}
+                      value={field.value}
+                      onChange={field.onChange}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                        <InputOTPSlot index={1} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                        <InputOTPSlot index={2} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                        <InputOTPSlot index={3} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                        <InputOTPSlot index={4} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                        <InputOTPSlot index={5} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                      </InputOTPGroup>
+                    </InputOTP>
                   </div>
                   {fieldState.error?.message && (
                     <p className='text-sm text-red-600'>{fieldState.error.message}</p>
@@ -123,29 +127,22 @@ export function SignInForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
-                  <div className='flex items-center justify-between'>
-                    <label
-                      htmlFor='sign-in-password'
-                      className='block text-sm font-medium text-[#50453f]'
-                    >
-                      Contraseña
-                    </label>
-                    <Link
-                      href='/forgot-password'
-                      className='text-sm font-medium text-[#2b1608] hover:text-[#5c4130]'
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
-                  </div>
+                  <label
+                    htmlFor='reset-password'
+                    className='block text-sm font-medium text-[#50453f]'
+                  >
+                    Nueva contraseña
+                  </label>
                   <div className='relative'>
+                    <KeyRoundIcon className='pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[#82746e]' />
                     <Input
                       {...field}
-                      id='sign-in-password'
+                      id='reset-password'
                       name='password'
                       type={showPassword ? 'text' : 'password'}
                       placeholder='••••••••'
-                      autoComplete='current-password'
-                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pr-12'
+                      autoComplete='new-password'
+                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pl-11 pr-12'
                       aria-invalid={fieldState.invalid}
                     />
                     <Button
@@ -166,6 +163,24 @@ export function SignInForm() {
                   {fieldState.error?.message && (
                     <p className='text-sm text-red-600'>{fieldState.error.message}</p>
                   )}
+                  {/* Password requirements */}
+                  <div className="space-y-1 mt-2">
+                    <p className={`text-xs ${(field.value || '').length >= 12 ? 'text-green-600' : 'text-[#82746e]'}`}>
+                      • Al menos 12 caracteres
+                    </p>
+                    <p className={`text-xs ${/[A-Z]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                      • Una letra mayúscula
+                    </p>
+                    <p className={`text-xs ${/[a-z]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                      • Una letra minúscula
+                    </p>
+                    <p className={`text-xs ${/[0-9]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                      • Un número
+                    </p>
+                    <p className={`text-xs ${/[^A-Za-z0-9]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                      • Un carácter especial
+                    </p>
+                  </div>
                 </div>
               )}
             />
@@ -179,21 +194,21 @@ export function SignInForm() {
 
             <Button
               type='submit'
-              form='sign-in-form'
+              form='reset-password-form'
               disabled={isPending || isTransitioning}
               className='h-12 w-full rounded-xl bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] text-base font-bold text-white hover:opacity-95'
             >
-              {isPending || isTransitioning ? 'Iniciando sesión...' : 'Ingresar'}
+              {isPending || isTransitioning ? 'Guardando...' : 'Cambiar contraseña'}
             </Button>
           </form>
 
           <p className='mt-8 border-t border-[#d3c3bb]/30 pt-8 text-center text-sm text-[#50453f]'>
-            ¿Aún no tienes una cuenta?{' '}
+            ¿Recordaste tu contraseña?{' '}
             <Link
-              href='/register'
+              href='/sign-in'
               className='font-bold text-[#2b1608] transition-colors hover:text-[#5c4130]'
             >
-              Crear una cuenta
+              Iniciar sesión
             </Link>
           </p>
         </div>

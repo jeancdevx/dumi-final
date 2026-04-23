@@ -82,8 +82,39 @@ export const forceChangePasswordSchema = z.object({
     )
 })
 
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'El correo electrónico es obligatorio')
+    .regex(emailRegex, 'Ingresa un correo electrónico válido')
+})
+
+export const resetPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'El correo electrónico es obligatorio')
+    .regex(emailRegex, 'Ingresa un correo electrónico válido'),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, 'El código debe contener solo dígitos')
+    .min(1, 'El código es obligatorio'),
+  password: z
+    .string()
+    .min(12, 'La contraseña debe tener al menos 12 caracteres')
+    .max(64, 'La contraseña no puede exceder 64 caracteres')
+    .regex(
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/,
+      'La contraseña debe incluir mayúsculas, minúsculas, números y símbolos'
+    )
+})
+
 export type SignInInput = z.infer<typeof signInSchema>
 export type SignUpInput = z.infer<typeof signUpSchema>
 export type OtpVerificationInput = z.infer<typeof otpVerificationSchema>
 export type TenantSetupInput = z.infer<typeof tenantSetupSchema>
 export type ForceChangePasswordInput = z.infer<typeof forceChangePasswordSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
