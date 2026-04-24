@@ -123,20 +123,12 @@ export function SignInForm() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
-                  <div className='flex items-center justify-between'>
-                    <label
-                      htmlFor='sign-in-password'
-                      className='block text-sm font-medium text-[#50453f]'
-                    >
-                      Contraseña
-                    </label>
-                    <Link
-                      href='/forgot-password'
-                      className='text-sm font-medium text-[#2b1608] hover:text-[#5c4130]'
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
-                  </div>
+                  <label
+                    htmlFor='sign-in-password'
+                    className='block text-sm font-medium text-[#50453f]'
+                  >
+                    Contraseña
+                  </label>
                   <div className='relative'>
                     <Input
                       {...field}
@@ -162,6 +154,14 @@ export function SignInForm() {
                         <EyeIcon className='h-4 w-4 text-[#50453f]' />
                       )}
                     </Button>
+                  </div>
+                  <div>
+                    <Link
+                      href='/forgot-password'
+                      className='text-sm font-medium text-[#2b1608] hover:text-[#5c4130]'
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
                   </div>
                   {fieldState.error?.message && (
                     <p className='text-sm text-red-600'>{fieldState.error.message}</p>
