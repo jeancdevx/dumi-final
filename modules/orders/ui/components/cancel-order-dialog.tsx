@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-import { cancelOrder } from '@/modules/orders/actions/cancel-order'
+import { cancelOrderClient } from '@/modules/orders/lib/orders-client'
 import {
   cancelOrderDefaultValues,
   cancelOrderSchema,
@@ -62,7 +62,7 @@ export function CancelOrderDialog({
 
   const handleCancel = (values: CancelOrderFormValues) => {
     startTransition(async () => {
-      const result = await cancelOrder(orderId, values.reason)
+      const result = await cancelOrderClient(orderId, values.reason)
 
       if (result.success) {
         toast.success('Orden cancelada', {

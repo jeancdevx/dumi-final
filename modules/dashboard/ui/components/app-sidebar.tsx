@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+
 import {
   ChevronRight,
   ChevronsUpDown,
@@ -11,13 +12,15 @@ import {
   PackageIcon,
   Settings,
   Shirt,
+  UserCircle,
   UserRound,
-  Users,
-  UserCircle
+  Users
 } from 'lucide-react'
 
-import { signOut } from '@/modules/auth/actions/sign-out'
+import { signOutClient } from '@/modules/auth/lib/auth-client'
 import type { Role } from '@/modules/auth/types'
+
+import { ClientOnly } from '@/components/client-only'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Collapsible,
@@ -150,6 +153,7 @@ const sellerNavGroups: NavGroup[] = [
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const isAdmin = user.roles.includes('owner') || user.roles.includes('admin')
   const navGroups = isAdmin ? adminNavGroups : sellerNavGroups
   const profileHref = isAdmin ? '/admin/profile' : '/seller/profile'
@@ -162,125 +166,135 @@ export function AppSidebar({ user }: AppSidebarProps) {
     return group.items.some(item => pathname === item.href)
   }
 
+  function handleSignOut() {
+    signOutClient()
+    router.push('/sign-in')
+  }
+
   return (
-    <Sidebar>
-      <SidebarHeader className='border-b p-4'>
-        <Link href='/' className='flex items-center gap-2'>
-          <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-sm font-bold'>
-            D
-          </div>
-          <span className='text-lg font-semibold'>TELAR</span>
-        </Link>
-      </SidebarHeader>
+    <ClientOnly>
+      <Sidebar>
+        <SidebarHeader className='border-b p-4'>
+          <Link href='/' className='flex items-center gap-2'>
+            <div className='bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-sm font-bold'>
+              D
+            </div>
+            <span className='text-lg font-semibold'>TELAR</span>
+          </Link>
+        </SidebarHeader>
 
-      <SidebarContent>
-        {navGroups.map(group => (
-          <Collapsible
-            key={group.title}
-            defaultOpen={isGroupActive(group)}
-            className='group/collapsible'
-          >
-            <SidebarGroup>
-              <SidebarGroupLabel asChild>
-                <CollapsibleTrigger className='flex w-full items-center'>
-                  <group.icon className='mr-2 h-4 w-4' />
-                  {group.title}
-                  <ChevronRight className='ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
-                </CollapsibleTrigger>
-              </SidebarGroupLabel>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {group.items.map(item => (
-                    <SidebarMenuSubItem key={item.href}>
-                      <SidebarMenuSubButton
-                        asChild
-                        isActive={pathname === item.href}
-                      >
-                        <Link href={item.href}>
-                          <item.icon className='h-4 w-4' />
-                          {item.title}
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarGroup>
-          </Collapsible>
-        ))}
-      </SidebarContent>
+        <SidebarContent>
+          {navGroups.map(group => (
+            <Collapsible
+              key={group.title}
+              defaultOpen={isGroupActive(group)}
+              className='group/collapsible'
+            >
+              <SidebarGroup>
+                <SidebarGroupLabel asChild>
+                  <CollapsibleTrigger className='flex w-full items-center'>
+                    <group.icon className='mr-2 h-4 w-4' />
+                    {group.title}
+                    <ChevronRight className='ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90' />
+                  </CollapsibleTrigger>
+                </SidebarGroupLabel>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {group.items.map(item => (
+                      <SidebarMenuSubItem key={item.href}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === item.href}
+                        >
+                          <Link href={item.href}>
+                            <item.icon className='h-4 w-4' />
+                            {item.title}
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
+          ))}
+        </SidebarContent>
 
-      <SidebarFooter className='border-t p-2'>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className='hover:bg-sidebar-accent flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors'>
-              <Avatar className='h-9 w-9'>
-                <AvatarFallback className='bg-primary/10 text-primary text-sm'>
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className='flex flex-1 flex-col overflow-hidden'>
-                <span className='truncate text-sm font-medium'>{fullName}</span>
-                <span className='text-muted-foreground truncate text-xs'>
-                  {user.email}
-                </span>
-              </div>
-              <ChevronsUpDown className='text-muted-foreground h-4 w-4 shrink-0' />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            className='w-64 p-0'
-            side='top'
-            align='start'
-            sideOffset={8}
-          >
-            {/* Info del usuario */}
-            <div className='p-3'>
-              <div className='flex items-center gap-3'>
-                <Avatar className='h-10 w-10'>
-                  <AvatarFallback className='bg-primary/10 text-primary'>
+        <SidebarFooter className='border-t p-2'>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className='hover:bg-sidebar-accent flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors'>
+                <Avatar className='h-9 w-9'>
+                  <AvatarFallback className='bg-primary/10 text-primary text-sm'>
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className='flex flex-col overflow-hidden'>
-                  <span className='truncate text-sm font-medium'>{fullName}</span>
+                <div className='flex flex-1 flex-col overflow-hidden'>
+                  <span className='truncate text-sm font-medium'>
+                    {fullName}
+                  </span>
                   <span className='text-muted-foreground truncate text-xs'>
                     {user.email}
                   </span>
                 </div>
+                <ChevronsUpDown className='text-muted-foreground h-4 w-4 shrink-0' />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className='w-64 p-0'
+              side='top'
+              align='start'
+              sideOffset={8}
+            >
+              {/* Info del usuario */}
+              <div className='p-3'>
+                <div className='flex items-center gap-3'>
+                  <Avatar className='h-10 w-10'>
+                    <AvatarFallback className='bg-primary/10 text-primary'>
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className='flex flex-col overflow-hidden'>
+                    <span className='truncate text-sm font-medium'>
+                      {fullName}
+                    </span>
+                    <span className='text-muted-foreground truncate text-xs'>
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <Separator />
+              <Separator />
 
-            {/* Link a Mi perfil */}
-            <div className='p-1'>
-              <Link
-                href={profileHref}
-                className='hover:bg-accent flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
-              >
-                <UserCircle className='h-4 w-4' />
-                <span>Mi perfil</span>
-              </Link>
-            </div>
+              {/* Link a Mi perfil */}
+              <div className='p-1'>
+                <Link
+                  href={profileHref}
+                  className='hover:bg-accent flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
+                >
+                  <UserCircle className='h-4 w-4' />
+                  <span>Mi perfil</span>
+                </Link>
+              </div>
 
-            <Separator />
+              <Separator />
 
-            {/* Cerrar sesión */}
-            <div className='p-1'>
-              <form action={signOut} className='w-full'>
+              {/* Cerrar sesión */}
+              <div className='p-1'>
                 <button
-                  type='submit'
+                  type='button'
+                  onClick={handleSignOut}
                   className='text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
                 >
                   <LogOut className='h-4 w-4' />
                   <span>Cerrar sesión</span>
                 </button>
-              </form>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </SidebarFooter>
-    </Sidebar>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </SidebarFooter>
+      </Sidebar>
+    </ClientOnly>
   )
 }

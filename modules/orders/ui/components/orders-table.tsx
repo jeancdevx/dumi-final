@@ -13,6 +13,8 @@ import {
 
 import { format } from 'date-fns'
 
+import { detailPath } from '@/lib/routes'
+
 import { ORDER_STATUSES } from '@/modules/orders/constants'
 import type { Order } from '@/modules/orders/types'
 
@@ -128,7 +130,7 @@ export function OrdersTable({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end'>
                     <DropdownMenuItem asChild>
-                      <Link href={`${basePath}/${order.id}`}>
+                      <Link href={detailPath(basePath, order.id)}>
                         <Eye className='mr-2 h-4 w-4' />
                         Ver detalle
                       </Link>

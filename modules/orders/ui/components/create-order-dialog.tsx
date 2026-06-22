@@ -12,6 +12,7 @@ import { es } from 'date-fns/locale'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { detailPath } from '@/lib/routes'
 import { cn } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
@@ -40,11 +41,8 @@ import {
   PopoverTrigger
 } from '@/components/ui/popover'
 
-import { createOrder } from '../../actions'
-import {
-  DELIVERY_DATE_MAX_DAYS,
-  DELIVERY_DATE_MIN_DAYS
-} from '../../constants'
+import { DELIVERY_DATE_MAX_DAYS, DELIVERY_DATE_MIN_DAYS } from '../../constants'
+import { createOrderClient } from '../../lib/orders-client'
 import {
   createOrderDefaultValues,
   createOrderSchema,
@@ -55,12 +53,14 @@ import { AddressForm } from './address-form'
 interface CreateOrderDialogProps {
   quoteId: string
   quotationCode?: string
+  basePath?: string
   trigger?: React.ReactNode
 }
 
 export function CreateOrderDialog({
   quoteId,
   quotationCode,
+  basePath = '/admin/orders',
   trigger
 }: CreateOrderDialogProps) {
   const router = useRouter()
@@ -82,15 +82,17 @@ export function CreateOrderDialog({
   })
 
   // Obtiene el "hoy" en la zona horaria de Lima para las validaciones
-  const limaStr = new Date().toLocaleString('en-US', { timeZone: 'America/Lima' })
+  const limaStr = new Date().toLocaleString('en-US', {
+    timeZone: 'America/Lima'
+  })
   const today = startOfDay(new Date(limaStr))
-  
+
   const minDate = addDays(today, DELIVERY_DATE_MIN_DAYS)
   const maxDate = addDays(today, DELIVERY_DATE_MAX_DAYS)
 
   const onSubmit = (values: CreateOrderFormValues) => {
     startTransition(async () => {
-      const result = await createOrder({
+      const result = await createOrderClient({
         quoteId: values.quoteId,
         deliveryDate: format(values.deliveryDate, 'yyyy-MM-dd'),
         address: {
@@ -107,7 +109,12 @@ export function CreateOrderDialog({
         })
         setOpen(false)
         form.reset()
-        router.push(`/admin/orders/${result.data?.id}`)
+        router.refresh()
+        if (result.data?.id) {
+          router.push(detailPath(basePath, result.data.id))
+        } else {
+          router.push(basePath)
+        }
       } else {
         toast.error('Error al crear la orden', {
           description: result.error

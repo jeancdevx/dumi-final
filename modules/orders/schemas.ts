@@ -1,14 +1,13 @@
 import { addDays, startOfDay } from 'date-fns'
 import { z } from 'zod'
 
-import {
-  DELIVERY_DATE_MAX_DAYS,
-  DELIVERY_DATE_MIN_DAYS
-} from './constants'
+import { DELIVERY_DATE_MAX_DAYS, DELIVERY_DATE_MIN_DAYS } from './constants'
 
 // Obtiene el "hoy" en la zona horaria de Lima
 function getTodayInLima(): Date {
-  const limaStr = new Date().toLocaleString('en-US', { timeZone: 'America/Lima' })
+  const limaStr = new Date().toLocaleString('en-US', {
+    timeZone: 'America/Lima'
+  })
   return startOfDay(new Date(limaStr))
 }
 

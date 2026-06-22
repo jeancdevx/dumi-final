@@ -8,7 +8,7 @@ import { XCircle } from 'lucide-react'
 
 import { toast } from 'sonner'
 
-import { cancelQuotation } from '@/modules/quotations/actions/cancel-quotation'
+import { cancelQuotationClient } from '@/modules/quotations/lib/quotations-client'
 
 import {
   AlertDialog,
@@ -43,7 +43,7 @@ export function CancelQuotationDialog({
 
   const handleCancel = () => {
     startTransition(async () => {
-      const result = await cancelQuotation(quotationId)
+      const result = await cancelQuotationClient(quotationId)
 
       if (result.success) {
         toast.success('Cotización cancelada exitosamente')

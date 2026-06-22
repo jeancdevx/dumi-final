@@ -33,9 +33,8 @@ export interface ClothesImage {
 export interface Clothes {
   id: string
   name: string
-  description: string
+  description: string | null
   price: string
-  isInEcommerce: boolean
   isDraft: boolean
   createdAt: string
   updatedAt: string
@@ -76,7 +75,6 @@ export interface CreateClothesResponse {
   name: string
   description: string
   price: number
-  isInEcommerce: boolean
   isDraft: boolean
   createdAt: string
   updatedAt: string
@@ -90,5 +88,4 @@ export interface SearchClothesParams {
   size?: string
   gender?: string
   isDraft?: boolean
-  isInEcommerce?: boolean
 }

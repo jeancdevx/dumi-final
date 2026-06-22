@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -9,11 +9,13 @@ import { CheckIcon, EyeIcon, EyeOffIcon, OctagonAlertIcon } from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 
-import { confirmEmail } from '@/modules/auth/actions/confirm-email'
-import { resendCode } from '@/modules/auth/actions/resend-code'
-import { signUp } from '@/modules/auth/actions/sign-up'
+import {
+  confirmEmailClient,
+  resendCodeClient,
+  signUpClient
+} from '@/modules/auth/lib/auth-client'
 import {
   otpVerificationSchema,
   signUpSchema,
@@ -33,16 +35,43 @@ import {
 
 type Step = 'create-account' | 'verify-code' | 'done'
 const PENDING_EMAIL_STORAGE_KEY = 'auth.pendingVerificationEmail'
+const PENDING_EMAIL_STORAGE_EVENT = 'auth:pending-verification-email'
+
+function getPendingVerificationEmail() {
+  if (typeof window === 'undefined') return ''
+
+  return window.sessionStorage.getItem(PENDING_EMAIL_STORAGE_KEY) ?? ''
+}
+
+function subscribeToPendingVerificationEmail(onStoreChange: () => void) {
+  window.addEventListener('storage', onStoreChange)
+  window.addEventListener(PENDING_EMAIL_STORAGE_EVENT, onStoreChange)
+
+  return () => {
+    window.removeEventListener('storage', onStoreChange)
+    window.removeEventListener(PENDING_EMAIL_STORAGE_EVENT, onStoreChange)
+  }
+}
+
+function setPendingVerificationEmail(email: string) {
+  window.sessionStorage.setItem(PENDING_EMAIL_STORAGE_KEY, email)
+  window.dispatchEvent(new Event(PENDING_EMAIL_STORAGE_EVENT))
+}
 
 export function SignUpForm() {
   const router = useRouter()
   const [step, setStep] = useState<Step>('create-account')
-  const [pendingEmail, setPendingEmail] = useState('')
+  const [pendingEmailOverride, setPendingEmailOverride] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const storedPendingEmail = useSyncExternalStore(
+    subscribeToPendingVerificationEmail,
+    getPendingVerificationEmail,
+    () => ''
+  )
 
   const signUpForm = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
@@ -59,8 +88,17 @@ export function SignUpForm() {
     resolver: zodResolver(otpVerificationSchema),
     defaultValues: { email: '', code: '' }
   })
-  const otpCode = otpForm.watch('code')
-  const signupPassword = signUpForm.watch('password') || ''
+  const otpCode = useWatch({ control: otpForm.control, name: 'code' })
+  const signupPassword =
+    useWatch({ control: signUpForm.control, name: 'password' }) || ''
+  const pendingEmail = pendingEmailOverride || storedPendingEmail
+  const currentStep =
+    step === 'create-account' && pendingEmail ? 'verify-code' : step
+  const verificationSuccessMessage =
+    successMessage ??
+    (currentStep === 'verify-code' && storedPendingEmail
+      ? 'Retomamos tu verificación de correo.'
+      : null)
 
   const reqs = {
     length: signupPassword.length >= 12,
@@ -70,28 +108,12 @@ export function SignUpForm() {
     symbol: /[^A-Za-z0-9]/.test(signupPassword)
   }
 
-  useEffect(() => {
-    const storedEmail = window.sessionStorage.getItem(PENDING_EMAIL_STORAGE_KEY)
-    if (!storedEmail) return
-    setPendingEmail(storedEmail)
-    otpForm.setValue('email', storedEmail)
-    setStep('verify-code')
-    setSuccessMessage('Retomamos tu verificación de correo.')
-  }, [otpForm])
-
   const handleCreateAccount = async (data: SignUpInput) => {
     setIsSubmitting(true)
     setErrorMessage(null)
     setSuccessMessage(null)
 
-    const formData = new FormData()
-    formData.append('firstName', data.firstName)
-    formData.append('lastName', data.lastName)
-    formData.append('email', data.email)
-    formData.append('password', data.password)
-    formData.append('acceptedTerms', String(data.acceptedTerms))
-
-    const result = await signUp({ success: false }, formData)
+    const result = await signUpClient(data)
 
     if (!result.success) {
       setErrorMessage(result.error || 'No se pudo crear la cuenta.')
@@ -100,25 +122,28 @@ export function SignUpForm() {
     }
 
     const email = result.data?.email ?? data.email
-    setPendingEmail(email)
+    setPendingEmailOverride(email)
     otpForm.setValue('email', email)
     otpForm.setValue('code', '')
-    window.sessionStorage.setItem(PENDING_EMAIL_STORAGE_KEY, email)
+    setPendingVerificationEmail(email)
     setStep('verify-code')
     setSuccessMessage(`Te enviamos un código de 6 dígitos al correo ${email}.`)
     setIsSubmitting(false)
   }
 
   const handleVerifyCode = async (data: OtpVerificationInput) => {
+    const email = data.email || pendingEmail
+
+    if (!email) {
+      setErrorMessage('No se encontró el correo pendiente de verificación.')
+      return
+    }
+
     setIsSubmitting(true)
     setErrorMessage(null)
     setSuccessMessage(null)
 
-    const formData = new FormData()
-    formData.append('email', data.email)
-    formData.append('code', data.code)
-
-    const result = await confirmEmail({ success: false }, formData)
+    const result = await confirmEmailClient({ ...data, email })
 
     if (!result.success) {
       setErrorMessage(result.error || 'No se pudo verificar el código.')
@@ -138,7 +163,7 @@ export function SignUpForm() {
     setErrorMessage(null)
     setSuccessMessage(null)
 
-    const result = await resendCode(pendingEmail)
+    const result = await resendCodeClient(pendingEmail)
 
     if (!result.success) {
       setErrorMessage(result.error || 'No se pudo reenviar el código.')
@@ -154,7 +179,9 @@ export function SignUpForm() {
       <div className='relative hidden w-1/2 items-center justify-center overflow-hidden bg-[#2b1608] p-12 md:flex'>
         <div className='absolute inset-0 bg-[radial-gradient(circle_at_top_right,#5c4130_0%,#2b1608_60%)] opacity-90' />
         <div className='relative z-10 max-w-md text-white'>
-          <h1 className='mb-6 text-6xl leading-none font-black tracking-tight'>Telar</h1>
+          <h1 className='mb-6 text-6xl leading-none font-black tracking-tight'>
+            Telar
+          </h1>
           <p className='text-2xl leading-relaxed font-light text-[#e6bea8]'>
             Crea tu cuenta y comienza a gestionar tu negocio.
           </p>
@@ -169,15 +196,16 @@ export function SignUpForm() {
       {/* Panel derecho — formulario */}
       <div className='flex flex-1 items-center justify-center p-6 md:p-12 lg:p-24'>
         <div className='w-full max-w-md space-y-8'>
-
           {/* Paso 1: crear cuenta */}
-          {step === 'create-account' && (
+          {currentStep === 'create-account' && (
             <>
               <div className='space-y-2'>
                 <h2 className='text-4xl leading-tight font-bold tracking-tight text-[#2b1608]'>
                   Comienza tu viaje
                 </h2>
-                <p className='font-medium text-[#50453f]'>Crea una cuenta para continuar.</p>
+                <p className='font-medium text-[#50453f]'>
+                  Crea una cuenta para continuar.
+                </p>
               </div>
 
               {errorMessage && (
@@ -194,7 +222,10 @@ export function SignUpForm() {
                 <div className='space-y-5'>
                   <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                     <div className='space-y-1.5'>
-                      <label className='ml-1 block text-sm font-semibold text-[#50453f]' htmlFor='firstName'>
+                      <label
+                        className='ml-1 block text-sm font-semibold text-[#50453f]'
+                        htmlFor='firstName'
+                      >
                         Nombre
                       </label>
                       <Input
@@ -211,7 +242,10 @@ export function SignUpForm() {
                     </div>
 
                     <div className='space-y-1.5'>
-                      <label className='ml-1 block text-sm font-semibold text-[#50453f]' htmlFor='lastName'>
+                      <label
+                        className='ml-1 block text-sm font-semibold text-[#50453f]'
+                        htmlFor='lastName'
+                      >
                         Apellido
                       </label>
                       <Input
@@ -229,7 +263,10 @@ export function SignUpForm() {
                   </div>
 
                   <div className='space-y-1.5'>
-                    <label className='ml-1 block text-sm font-semibold text-[#50453f]' htmlFor='signup-email'>
+                    <label
+                      className='ml-1 block text-sm font-semibold text-[#50453f]'
+                      htmlFor='signup-email'
+                    >
                       Correo electrónico
                     </label>
                     <Input
@@ -247,7 +284,10 @@ export function SignUpForm() {
                   </div>
 
                   <div className='space-y-1.5'>
-                    <label className='ml-1 block text-sm font-semibold text-[#50453f]' htmlFor='signup-password'>
+                    <label
+                      className='ml-1 block text-sm font-semibold text-[#50453f]'
+                      htmlFor='signup-password'
+                    >
                       Contraseña
                     </label>
                     <div className='relative'>
@@ -278,11 +318,22 @@ export function SignUpForm() {
                       </p>
                     )}
                     <div className='mt-2 text-xs leading-relaxed'>
-                      <p className='mb-1.5 font-medium text-[#50453f]'>Debe incluir al menos:</p>
+                      <p className='mb-1.5 font-medium text-[#50453f]'>
+                        Debe incluir al menos:
+                      </p>
                       <ul className='space-y-1.5'>
-                        <RequirementItem met={reqs.length} text='12 caracteres' />
-                        <RequirementItem met={reqs.lowercase} text='Una minúscula' />
-                        <RequirementItem met={reqs.uppercase} text='Una mayúscula' />
+                        <RequirementItem
+                          met={reqs.length}
+                          text='12 caracteres'
+                        />
+                        <RequirementItem
+                          met={reqs.lowercase}
+                          text='Una minúscula'
+                        />
+                        <RequirementItem
+                          met={reqs.uppercase}
+                          text='Una mayúscula'
+                        />
                         <RequirementItem met={reqs.number} text='Un número' />
                         <RequirementItem met={reqs.symbol} text='Un símbolo' />
                       </ul>
@@ -299,12 +350,14 @@ export function SignUpForm() {
                         <Checkbox
                           id='acceptedTerms'
                           checked={field.value}
-                          onCheckedChange={checked => field.onChange(Boolean(checked))}
+                          onCheckedChange={checked =>
+                            field.onChange(Boolean(checked))
+                          }
                           className='mt-0.5 data-[state=checked]:bg-[#2b1608]'
                         />
                         <span className='text-xs leading-relaxed text-[#50453f]'>
-                          Al crear una cuenta, aceptas nuestros Términos de Servicio y
-                          Política de Privacidad.
+                          Al crear una cuenta, aceptas nuestros Términos de
+                          Servicio y Política de Privacidad.
                         </span>
                       </label>
                     )}
@@ -328,7 +381,7 @@ export function SignUpForm() {
           )}
 
           {/* Paso 2: verificar código OTP */}
-          {step === 'verify-code' && (
+          {currentStep === 'verify-code' && (
             <div className='relative overflow-hidden rounded-xl bg-white p-8 shadow-[0_8px_24px_rgba(43,22,8,0.06)] md:p-12'>
               <div className='absolute -top-24 -right-24 h-48 w-48 rounded-full bg-[#f4f3f2] opacity-70' />
 
@@ -359,9 +412,11 @@ export function SignUpForm() {
                   </Alert>
                 )}
 
-                {successMessage && (
+                {verificationSuccessMessage && (
                   <Alert className='border-[#2b1608]/10 bg-[#fff8f3] text-[#2b1608]'>
-                    <AlertDescription>{successMessage}</AlertDescription>
+                    <AlertDescription>
+                      {verificationSuccessMessage}
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -388,7 +443,9 @@ export function SignUpForm() {
                         </InputOTPGroup>
                       </InputOTP>
                       {fieldState.error?.message && (
-                        <p className='text-sm text-red-600'>{fieldState.error.message}</p>
+                        <p className='text-sm text-red-600'>
+                          {fieldState.error.message}
+                        </p>
                       )}
                     </div>
                   )}
@@ -420,13 +477,15 @@ export function SignUpForm() {
           )}
 
           {/* Paso 3: cuenta verificada */}
-          {step === 'done' && (
+          {currentStep === 'done' && (
             <div className='space-y-6 rounded-xl border border-[#d3c3bb] bg-white p-8'>
               <div className='flex flex-col items-start gap-3'>
                 <div className='flex h-12 w-12 items-center justify-center rounded-full bg-[#fff8f3]'>
                   <span className='text-2xl'>✓</span>
                 </div>
-                <h3 className='text-2xl font-bold text-[#2b1608]'>¡Cuenta verificada!</h3>
+                <h3 className='text-2xl font-bold text-[#2b1608]'>
+                  ¡Cuenta verificada!
+                </h3>
               </div>
               {successMessage && (
                 <Alert className='border-[#2b1608]/10 bg-[#fff8f3] text-[#2b1608]'>
@@ -446,7 +505,7 @@ export function SignUpForm() {
             </div>
           )}
 
-          {step !== 'done' && (
+          {currentStep !== 'done' && (
             <p className='border-t border-[#e3e2e1] pt-6 text-center text-sm text-[#50453f]'>
               ¿Ya tienes una cuenta?{' '}
               <Link
@@ -468,12 +527,16 @@ function RequirementItem({ met, text }: { met: boolean; text: string }) {
     <li className='flex items-center gap-2'>
       <div
         className={`flex h-3.5 w-3.5 items-center justify-center rounded-[3px] border ${
-          met ? 'border-[#5c4130] bg-[#5c4130] text-white' : 'border-[#d3c3bb] bg-transparent'
+          met
+            ? 'border-[#5c4130] bg-[#5c4130] text-white'
+            : 'border-[#d3c3bb] bg-transparent'
         }`}
       >
         {met && <CheckIcon className='size-2.5' strokeWidth={4} />}
       </div>
-      <span className={met ? 'font-medium text-[#5c4130]' : 'text-[#7d7068]'}>{text}</span>
+      <span className={met ? 'font-medium text-[#5c4130]' : 'text-[#7d7068]'}>
+        {text}
+      </span>
     </li>
   )
 }

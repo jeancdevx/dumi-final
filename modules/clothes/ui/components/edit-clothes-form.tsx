@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation'
 import { CircleDollarSign, Save, Sparkles } from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
-import { updateClothes } from '@/modules/clothes/actions/update-clothes'
+import { updateClothesClient } from '@/modules/clothes/lib/clothes-client'
 import {
   updateClothesSchema,
   type UpdateClothesInput
@@ -42,26 +42,26 @@ import { Textarea } from '@/components/ui/textarea'
 
 interface EditClothesFormProps {
   clothes: Clothes
+  onUpdated?: () => void
 }
 
-export function EditClothesForm({ clothes }: EditClothesFormProps) {
+export function EditClothesForm({ clothes, onUpdated }: EditClothesFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const parsedPrice = Number(clothes.price) || 0
 
   const form = useForm<UpdateClothesInput>({
     resolver: zodResolver(updateClothesSchema),
     defaultValues: {
-      name: clothes.name,
-      description: clothes.description,
-      price: parseFloat(clothes.price),
-      isDraft: clothes.isDraft,
-      isInEcommerce: clothes.isInEcommerce
+      name: clothes.name ?? '',
+      description: clothes.description ?? '',
+      price: parsedPrice,
+      isDraft: Boolean(clothes.isDraft)
     }
   })
 
-  const watchedPrice = form.watch('price')
-  const watchedIsDraft = form.watch('isDraft')
-  const watchedIsInEcommerce = form.watch('isInEcommerce')
+  const watchedPrice = useWatch({ control: form.control, name: 'price' })
+  const watchedIsDraft = useWatch({ control: form.control, name: 'isDraft' })
 
   const variants = clothes.clothes_variant ?? []
   const minAdditional = Math.min(
@@ -70,16 +70,17 @@ export function EditClothesForm({ clothes }: EditClothesFormProps) {
   const maxAdditional = Math.max(
     ...variants.map(v => parseFloat(v.additional) || 0)
   )
-  const basePrice = watchedPrice || parseFloat(clothes.price)
+  const basePrice = watchedPrice || parsedPrice
   const minPrice = basePrice + minAdditional
   const maxPrice = basePrice + maxAdditional
 
   const onSubmit = (values: UpdateClothesInput) => {
     startTransition(async () => {
-      const result = await updateClothes(clothes.id, values)
+      const result = await updateClothesClient(clothes.id, values)
 
       if (result.success) {
         toast.success('Prenda actualizada exitosamente')
+        onUpdated?.()
         router.refresh()
       } else {
         toast.error(result.error || 'Error al actualizar la prenda')
@@ -109,14 +110,6 @@ export function EditClothesForm({ clothes }: EditClothesFormProps) {
                   <Badge variant='secondary'>Borrador</Badge>
                 ) : (
                   <Badge variant='default'>Publicada</Badge>
-                )}
-                {watchedIsInEcommerce && (
-                  <Badge
-                    variant='outline'
-                    className='border-green-500 text-green-600'
-                  >
-                    En ecommerce
-                  </Badge>
                 )}
               </div>
             </div>
@@ -211,44 +204,7 @@ export function EditClothesForm({ clothes }: EditClothesFormProps) {
                   <FormControl>
                     <Switch
                       checked={field.value}
-                      onCheckedChange={checked => {
-                        field.onChange(checked)
-                        if (checked) {
-                          form.setValue('isInEcommerce', false, {
-                            shouldDirty: true
-                          })
-                        }
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='isInEcommerce'
-              render={({ field }) => (
-                <FormItem className='flex items-center justify-between rounded-lg border p-4'>
-                  <div className='space-y-0.5'>
-                    <FormLabel className='text-base'>
-                      Mostrar en ecommerce
-                    </FormLabel>
-                    <FormDescription>
-                      La prenda aparecerá en la tienda online para compra
-                      directa
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={checked => {
-                        field.onChange(checked)
-                        if (checked) {
-                          form.setValue('isDraft', false, { shouldDirty: true })
-                        }
-                      }}
-                      disabled={watchedIsDraft}
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
                 </FormItem>

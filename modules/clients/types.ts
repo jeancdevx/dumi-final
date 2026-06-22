@@ -4,7 +4,6 @@ export interface Client {
   lastNames: string
   phone: string
   reference: string | null
-  isEcommerceUser: boolean
   createdAt: string
   updatedAt: string
 }

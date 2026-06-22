@@ -4,6 +4,8 @@ import Link from 'next/link'
 
 import { ArrowLeft, Pencil } from 'lucide-react'
 
+import { editPath } from '@/lib/routes'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -55,14 +57,6 @@ export function ClothesDetail({
                   Publicada
                 </Badge>
               )}
-              {clothes.isInEcommerce && (
-                <Badge
-                  variant='secondary'
-                  className='bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                >
-                  En e-commerce
-                </Badge>
-              )}
             </div>
 
             <p className='text-primary text-2xl font-semibold'>
@@ -96,7 +90,7 @@ export function ClothesDetail({
             </Button>
             {canEdit && (
               <Button asChild>
-                <Link href={`${basePath}/${clothes.id}/edit`}>
+                <Link href={editPath(basePath, clothes.id)}>
                   <Pencil className='mr-2 h-4 w-4' />
                   Editar prenda
                 </Link>

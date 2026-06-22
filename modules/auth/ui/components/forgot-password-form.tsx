@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useTransition } from 'react'
+import { useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -10,8 +10,11 @@ import { MailIcon, OctagonAlertIcon } from 'lucide-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { forgotPassword } from '@/modules/auth/actions/forgot-password'
-import { forgotPasswordSchema, type ForgotPasswordInput } from '@/modules/auth/schemas'
+import { forgotPasswordClient } from '@/modules/auth/lib/auth-client'
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordInput
+} from '@/modules/auth/schemas'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -22,21 +25,25 @@ const initialState: ActionResponse<{ redirectTo: string }> = { success: false }
 
 export function ForgotPasswordForm() {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(forgotPassword, initialState)
+  const [state, setState] = useState(initialState)
+  const [isPending, setIsPending] = useState(false)
 
   const form = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: '' }
   })
 
-  const [isTransitioning, startTransition] = useTransition()
+  const handleSubmit = async (data: ForgotPasswordInput) => {
+    setIsPending(true)
+    const result = await forgotPasswordClient(data)
+    setState(result)
+    setIsPending(false)
 
-  useEffect(() => {
-    if (state.success && state.data?.redirectTo) {
-      window.sessionStorage.setItem('auth.resetPasswordEmail', form.getValues('email'))
-      router.push(state.data.redirectTo)
+    if (result.success && result.data?.redirectTo) {
+      window.sessionStorage.setItem('auth.resetPasswordEmail', data.email)
+      router.push(result.data.redirectTo)
     }
-  }, [state, router, form])
+  }
 
   return (
     <div className='relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#faf9f8] p-6'>
@@ -45,7 +52,9 @@ export function ForgotPasswordForm() {
 
       <div className='w-full max-w-md'>
         <div className='mb-12 flex flex-col items-center'>
-          <div className='mb-2 text-4xl font-black tracking-tight text-[#2b1608]'>Telar</div>
+          <div className='mb-2 text-4xl font-black tracking-tight text-[#2b1608]'>
+            Telar
+          </div>
           <div className='h-1 w-8 rounded-full bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)]' />
         </div>
 
@@ -54,19 +63,15 @@ export function ForgotPasswordForm() {
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-[#2b1608]'>
               Recuperar contraseña
             </h1>
-            <p className='text-sm text-[#50453f]'>Ingresa tu correo para recibir un código de recuperación.</p>
+            <p className='text-sm text-[#50453f]'>
+              Ingresa tu correo para recibir un código de recuperación.
+            </p>
           </div>
 
           <form
             id='forgot-password-form'
             className='space-y-6'
-            onSubmit={form.handleSubmit(data => {
-              startTransition(() => {
-                const formData = new FormData()
-                formData.append('email', data.email)
-                formAction(formData)
-              })
-            })}
+            onSubmit={form.handleSubmit(handleSubmit)}
           >
             <Controller
               name='email'
@@ -93,7 +98,9 @@ export function ForgotPasswordForm() {
                     />
                   </div>
                   {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
+                    <p className='text-sm text-red-600'>
+                      {fieldState.error.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -109,10 +116,10 @@ export function ForgotPasswordForm() {
             <Button
               type='submit'
               form='forgot-password-form'
-              disabled={isPending || isTransitioning}
+              disabled={isPending}
               className='h-12 w-full rounded-xl bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] text-base font-bold text-white hover:opacity-95'
             >
-              {isPending || isTransitioning ? 'Enviando...' : 'Enviar código'}
+              {isPending ? 'Enviando...' : 'Enviar código'}
             </Button>
           </form>
 

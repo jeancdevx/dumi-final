@@ -75,10 +75,7 @@ export function AddressForm() {
           <FormItem>
             <FormLabel>Dirección exacta</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                placeholder='Ej: Av. Larco 123'
-              />
+              <Input {...field} placeholder='Ej: Av. Larco 123' />
             </FormControl>
             <FormMessage />
           </FormItem>

@@ -7,19 +7,7 @@ import { QuotationsSearchResults } from '@/modules/quotations/ui/components/quot
 
 import { Button } from '@/components/ui/button'
 
-interface QuotationsPageProps {
-  searchParams: Promise<{
-    status?: string
-    sortBy?: string
-    sortOrder?: string
-  }>
-}
-
-export default async function SellerQuotationsPage({
-  searchParams
-}: QuotationsPageProps) {
-  const params = await searchParams
-
+export default function SellerQuotationsPage() {
   return (
     <div className='flex flex-1 flex-col gap-6 p-6'>
       <div className='flex items-center justify-between'>
@@ -39,10 +27,7 @@ export default async function SellerQuotationsPage({
 
       <QuotationsFilters />
 
-      <QuotationsSearchResults
-        searchParams={params}
-        basePath='/seller/quotations'
-      />
+      <QuotationsSearchResults basePath='/seller/quotations' />
     </div>
   )
 }

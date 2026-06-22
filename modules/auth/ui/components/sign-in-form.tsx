@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState, useTransition } from 'react'
+import { useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -10,8 +10,7 @@ import { EyeIcon, EyeOffIcon, MailIcon, OctagonAlertIcon } from 'lucide-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { resendCode } from '@/modules/auth/actions/resend-code'
-import { signIn } from '@/modules/auth/actions/sign-in'
+import { resendCodeClient, signInClient } from '@/modules/auth/lib/auth-client'
 import { signInSchema, type SignInInput } from '@/modules/auth/schemas'
 import type { ActionResponse } from '@/modules/auth/types'
 
@@ -23,7 +22,8 @@ const initialState: ActionResponse<{ redirectTo: string }> = { success: false }
 
 export function SignInForm() {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(signIn, initialState)
+  const [state, setState] = useState(initialState)
+  const [isPending, setIsPending] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<SignInInput>({
@@ -31,30 +31,40 @@ export function SignInForm() {
     defaultValues: { email: '', password: '' }
   })
 
-  const [isTransitioning, startTransition] = useTransition()
+  const handleSubmit = async (data: SignInInput) => {
+    setIsPending(true)
+    const result = await signInClient(data)
+    setState(result)
+    setIsPending(false)
 
-  useEffect(() => {
-    if (state.success && state.data?.redirectTo) {
-      if (state.data.redirectTo === '/force-change-password') {
-        const anyData = state.data as any;
-        window.sessionStorage.setItem('auth.challengeEmail', anyData.email)
-        window.sessionStorage.setItem('auth.challengeSession', anyData.session)
+    if (result.success && result.data?.redirectTo) {
+      if (result.data.redirectTo === '/force-change-password') {
+        window.sessionStorage.setItem(
+          'auth.challengeEmail',
+          result.data.email ?? ''
+        )
+        window.sessionStorage.setItem(
+          'auth.challengeSession',
+          result.data.session ?? ''
+        )
       }
-      router.push(state.data.redirectTo)
-    } else if (state.error === 'Debes confirmar tu correo antes de iniciar sesión') {
+      router.push(result.data.redirectTo)
+      return
+    }
+
+    if (result.error === 'Debes confirmar tu correo antes de iniciar sesión') {
       const email = form.getValues('email')
       if (email) {
         window.sessionStorage.setItem('auth.pendingVerificationEmail', email)
-        // Automatically trigger server action
-        resendCode(email).then(() => {
-          router.push('/register')
-        }).catch(err => {
-          console.error(err)
-          router.push('/register')
-        })
+        resendCodeClient(email)
+          .then(() => router.push('/register'))
+          .catch(err => {
+            console.error(err)
+            router.push('/register')
+          })
       }
     }
-  }, [state, router, form])
+  }
 
   return (
     <div className='relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#faf9f8] p-6'>
@@ -63,7 +73,9 @@ export function SignInForm() {
 
       <div className='w-full max-w-md'>
         <div className='mb-12 flex flex-col items-center'>
-          <div className='mb-2 text-4xl font-black tracking-tight text-[#2b1608]'>Telar</div>
+          <div className='mb-2 text-4xl font-black tracking-tight text-[#2b1608]'>
+            Telar
+          </div>
           <div className='h-1 w-8 rounded-full bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)]' />
         </div>
 
@@ -72,20 +84,15 @@ export function SignInForm() {
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-[#2b1608]'>
               Iniciar sesión
             </h1>
-            <p className='text-sm text-[#50453f]'>Bienvenido de nuevo a Telar.</p>
+            <p className='text-sm text-[#50453f]'>
+              Bienvenido de nuevo a Telar.
+            </p>
           </div>
 
           <form
             id='sign-in-form'
             className='space-y-6'
-            onSubmit={form.handleSubmit(data => {
-              startTransition(() => {
-                const formData = new FormData()
-                formData.append('email', data.email)
-                formData.append('password', data.password)
-                formAction(formData)
-              })
-            })}
+            onSubmit={form.handleSubmit(handleSubmit)}
           >
             <Controller
               name='email'
@@ -112,7 +119,9 @@ export function SignInForm() {
                     />
                   </div>
                   {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
+                    <p className='text-sm text-red-600'>
+                      {fieldState.error.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -146,7 +155,11 @@ export function SignInForm() {
                       size='sm'
                       className='absolute top-0 right-0 h-full px-3 hover:bg-transparent'
                       onClick={() => setShowPassword(prev => !prev)}
-                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      aria-label={
+                        showPassword
+                          ? 'Ocultar contraseña'
+                          : 'Mostrar contraseña'
+                      }
                     >
                       {showPassword ? (
                         <EyeOffIcon className='h-4 w-4 text-[#50453f]' />
@@ -164,7 +177,9 @@ export function SignInForm() {
                     </Link>
                   </div>
                   {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
+                    <p className='text-sm text-red-600'>
+                      {fieldState.error.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -180,10 +195,10 @@ export function SignInForm() {
             <Button
               type='submit'
               form='sign-in-form'
-              disabled={isPending || isTransitioning}
+              disabled={isPending}
               className='h-12 w-full rounded-xl bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] text-base font-bold text-white hover:opacity-95'
             >
-              {isPending || isTransitioning ? 'Iniciando sesión...' : 'Ingresar'}
+              {isPending ? 'Iniciando sesión...' : 'Ingresar'}
             </Button>
           </form>
 

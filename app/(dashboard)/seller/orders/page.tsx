@@ -1,19 +1,7 @@
 import { OrdersFilters } from '@/modules/orders/ui/components/orders-filters'
 import { OrdersSearchResults } from '@/modules/orders/ui/components/orders-search-results'
 
-interface OrdersPageProps {
-  searchParams: Promise<{
-    status?: string
-    sortBy?: string
-    sortOrder?: string
-  }>
-}
-
-export default async function SellerOrdersPage({
-  searchParams
-}: OrdersPageProps) {
-  const params = await searchParams
-
+export default function SellerOrdersPage() {
   return (
     <div className='flex flex-1 flex-col gap-6 p-6'>
       <div className='flex items-center justify-between'>
@@ -27,7 +15,7 @@ export default async function SellerOrdersPage({
 
       <OrdersFilters />
 
-      <OrdersSearchResults searchParams={params} basePath='/seller/orders' />
+      <OrdersSearchResults basePath='/seller/orders' />
     </div>
   )
 }

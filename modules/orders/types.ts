@@ -33,7 +33,6 @@ export interface OrderClothesVariant {
     name: string
     description: string
     price: string
-    isInEcommerce: boolean
     isDraft: boolean
     createdAt: string
     updatedAt: string

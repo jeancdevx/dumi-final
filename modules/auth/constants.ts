@@ -20,6 +20,8 @@ export const AUTH_COOKIES = {
 export const AUTH_ERRORS = {
   INVALID_CREDENTIALS: 'Correo o contraseña incorrectos',
   EMAIL_NOT_CONFIRMED: 'Debes confirmar tu correo antes de iniciar sesión',
+  USER_DISABLED:
+    'Tu cuenta está deshabilitada. Contacta al administrador de tu empresa.',
   SESSION_EXPIRED: 'Tu sesión ha expirado, por favor inicia sesión nuevamente',
   UNAUTHORIZED: 'No tienes permisos para acceder a esta página',
   UNKNOWN: 'Ocurrió un error inesperado, intenta nuevamente'

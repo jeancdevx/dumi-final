@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation'
-
-import { getRedirectPathByRole, getSession } from '@/modules/auth/lib/dal'
+import { AuthRouteGuard } from '@/modules/auth/ui/components/auth-route-guard'
 import { SignInForm } from '@/modules/auth/ui/components/sign-in-form'
 
 export const metadata = {
@@ -8,15 +6,10 @@ export const metadata = {
   description: 'Accede a Telar con tus credenciales'
 }
 
-export default async function SignInPage() {
-  const session = await getSession()
-
-  if (session) {
-    if (!session.tenantId) {
-      redirect('/tenant-setup')
-    }
-    redirect(getRedirectPathByRole(session.roles))
-  }
-
-  return <SignInForm />
+export default function SignInPage() {
+  return (
+    <AuthRouteGuard mode='guest'>
+      <SignInForm />
+    </AuthRouteGuard>
+  )
 }

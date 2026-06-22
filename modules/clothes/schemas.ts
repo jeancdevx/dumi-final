@@ -76,8 +76,7 @@ export const updateClothesSchema = z.object({
     .min(2, 'La descripción debe tener al menos 2 caracteres')
     .optional(),
   price: z.number().positive('El precio debe ser mayor a 0').optional(),
-  isDraft: z.boolean().optional(),
-  isInEcommerce: z.boolean().optional()
+  isDraft: z.boolean().optional()
 })
 
 export const updateVariantSchema = z.object({

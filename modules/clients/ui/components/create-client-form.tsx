@@ -1,12 +1,17 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { useState } from 'react'
+
+import { useRouter } from 'next/navigation'
+
 import { Plus } from 'lucide-react'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import type { ActionResponse } from '@/modules/auth/types'
+
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -29,7 +34,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-import { createClient } from '../../actions/create-client'
+import { createClientClient } from '../../lib/clients-client'
 import { createClientSchema, type CreateClientInput } from '../../schemas'
 import type { CreateClientResponse } from '../../types'
 
@@ -37,15 +42,15 @@ const initialState: ActionResponse<CreateClientResponse> = {
   success: false
 }
 
-export function CreateClientForm() {
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  // Guarda el id del último cliente procesado para detectar nuevas creaciones
-  const lastProcessedId = useRef<string | null>(null)
+interface CreateClientFormProps {
+  onCreated?: () => void
+}
 
-  const [state, formAction, isPending] = useActionState(
-    createClient,
-    initialState
-  )
+export function CreateClientForm({ onCreated }: CreateClientFormProps) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [state, setState] = useState(initialState)
+  const [isPending, setIsPending] = useState(false)
 
   const form = useForm<CreateClientInput>({
     resolver: zodResolver(createClientSchema),
@@ -57,18 +62,23 @@ export function CreateClientForm() {
     }
   })
 
-  useEffect(() => {
-    // Se dispara solo cuando el id del cliente creado es diferente al último procesado
-    if (state.success && state.data?.id && state.data.id !== lastProcessedId.current) {
-      lastProcessedId.current = state.data.id
+  async function handleSubmit(data: CreateClientInput) {
+    setIsPending(true)
+    const result = await createClientClient(data)
+    setState(result)
+    setIsPending(false)
+
+    if (result.success) {
       toast.success('Cliente creado exitosamente')
       form.reset()
-      closeButtonRef.current?.click()
+      setOpen(false)
+      onCreated?.()
+      router.refresh()
     }
-  }, [state.success, state.data, form])
+  }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className='mr-2 h-4 w-4' />
@@ -84,7 +94,10 @@ export function CreateClientForm() {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form action={formAction} className='space-y-4'>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className='space-y-4'
+          >
             <FormField
               control={form.control}
               name='names'
@@ -153,7 +166,7 @@ export function CreateClientForm() {
             )}
             <DialogFooter className='gap-2 sm:gap-0'>
               <DialogClose asChild>
-                <Button type='button' variant='outline' ref={closeButtonRef}>
+                <Button type='button' variant='outline'>
                   Cancelar
                 </Button>
               </DialogClose>

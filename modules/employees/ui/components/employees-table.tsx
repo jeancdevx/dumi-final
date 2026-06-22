@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 
-import { MoreHorizontal, Shield, UserRound } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+import { Shield, UserRound } from 'lucide-react'
 
 import { toast } from 'sonner'
 
@@ -21,12 +23,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import {
   Table,
   TableBody,
   TableCell,
@@ -35,7 +31,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 
-import { updateEmployeeStatus } from '../../actions/update-employee-status'
+import { updateEmployeeStatusClient } from '../../lib/employees-client'
 import type { Employee } from '../../types'
 
 interface EmployeesTableProps {
@@ -43,14 +39,18 @@ interface EmployeesTableProps {
   currentUserRoles: Role[]
   currentUserEmail: string
   currentUserSub: string
+  onStatusUpdated?: () => void
 }
 
 export function EmployeesTable({
   employees,
   currentUserRoles,
   currentUserEmail,
-  currentUserSub
+  currentUserSub,
+  onStatusUpdated
 }: EmployeesTableProps) {
+  const router = useRouter()
+  const [, startTransition] = useTransition()
   const [employeeToUpdate, setEmployeeToUpdate] = useState<{
     id: string
     name: string
@@ -70,23 +70,29 @@ export function EmployeesTable({
     if (!employeeToUpdate) return
 
     setIsUpdating(true)
-    const result = await updateEmployeeStatus({
-      employeeId: employeeToUpdate.id,
-      shouldActivate: !employeeToUpdate.isActive
-    })
-    setIsUpdating(false)
+    try {
+      const result = await updateEmployeeStatusClient({
+        employeeId: employeeToUpdate.id,
+        shouldActivate: !employeeToUpdate.isActive
+      })
 
-    if (result.success) {
-      toast.success(
-        employeeToUpdate.isActive
-          ? 'Empleado suspendido exitosamente'
-          : 'Empleado reactivado exitosamente'
-      )
-    } else {
-      toast.error(result.error || 'No se pudo actualizar el estado del empleado')
+      if (result.success) {
+        toast.success(
+          employeeToUpdate.isActive
+            ? 'Empleado suspendido exitosamente'
+            : 'Empleado reactivado exitosamente'
+        )
+        onStatusUpdated?.()
+        startTransition(() => router.refresh())
+      } else {
+        toast.error(
+          result.error || 'No se pudo actualizar el estado del empleado'
+        )
+      }
+    } finally {
+      setIsUpdating(false)
+      setEmployeeToUpdate(null)
     }
-
-    setEmployeeToUpdate(null)
   }
 
   function canManageEmployee(employee: Employee): boolean {
@@ -139,7 +145,7 @@ export function EmployeesTable({
             <TableHead>Roles</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Fecha de creación</TableHead>
-            <TableHead className='w-[50px]'></TableHead>
+            <TableHead className='w-[120px] text-right'>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -167,35 +173,29 @@ export function EmployeesTable({
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={employee.isActive ? 'secondary' : 'destructive'}>
+                <Badge
+                  variant={employee.isActive ? 'secondary' : 'destructive'}
+                >
                   {employee.isActive ? 'Activo' : 'Suspendido'}
                 </Badge>
               </TableCell>
               <TableCell>{formatDate(employee.createdAt)}</TableCell>
-              <TableCell>
+              <TableCell className='text-right'>
                 {canManageEmployee(employee) ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='ghost' size='icon'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Acciones</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem
-                        className='cursor-pointer'
-                        onClick={() =>
-                          setEmployeeToUpdate({
-                            id: employee.id,
-                            name: `${employee.names} ${employee.lastNames}`,
-                            isActive: employee.isActive
-                          })
-                        }
-                      >
-                        {employee.isActive ? 'Suspender' : 'Reactivar'}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button
+                    type='button'
+                    variant={employee.isActive ? 'outline' : 'secondary'}
+                    size='sm'
+                    onClick={() =>
+                      setEmployeeToUpdate({
+                        id: employee.id,
+                        name: `${employee.names} ${employee.lastNames}`,
+                        isActive: employee.isActive
+                      })
+                    }
+                  >
+                    {employee.isActive ? 'Suspender' : 'Reactivar'}
+                  </Button>
                 ) : (
                   <span className='text-muted-foreground text-xs'>-</span>
                 )}

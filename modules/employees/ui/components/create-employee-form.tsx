@@ -1,6 +1,8 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { useState } from 'react'
+
+import { useRouter } from 'next/navigation'
 
 import { Plus } from 'lucide-react'
 
@@ -37,7 +39,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-import { createEmployee } from '../../actions/create-employee'
+import { createEmployeeClient } from '../../lib/employees-client'
 import { createEmployeeSchema, type CreateEmployeeInput } from '../../schemas'
 import type { CreateEmployeeResponse } from '../../types'
 
@@ -47,16 +49,17 @@ const initialState: ActionResponse<CreateEmployeeResponse> = {
 
 interface CreateEmployeeFormProps {
   canAssignAdminRole: boolean
+  onCreated?: () => void
 }
 
 export function CreateEmployeeForm({
-  canAssignAdminRole
+  canAssignAdminRole,
+  onCreated
 }: CreateEmployeeFormProps) {
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const [state, formAction, isPending] = useActionState(
-    createEmployee,
-    initialState
-  )
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [state, setState] = useState(initialState)
+  const [isPending, setIsPending] = useState(false)
 
   const form = useForm<CreateEmployeeInput>({
     resolver: zodResolver(createEmployeeSchema),
@@ -68,16 +71,23 @@ export function CreateEmployeeForm({
     }
   })
 
-  useEffect(() => {
-    if (state.success) {
+  async function handleSubmit(data: CreateEmployeeInput) {
+    setIsPending(true)
+    const result = await createEmployeeClient(data)
+    setState(result)
+    setIsPending(false)
+
+    if (result.success) {
       toast.success('Empleado creado exitosamente')
       form.reset()
-      closeButtonRef.current?.click()
+      setOpen(false)
+      onCreated?.()
+      router.refresh()
     }
-  }, [state.success, form])
+  }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className='mr-2 h-4 w-4' />
@@ -93,7 +103,10 @@ export function CreateEmployeeForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form action={formAction} className='space-y-4'>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className='space-y-4'
+          >
             <FormField
               control={form.control}
               name='names'
@@ -148,10 +161,7 @@ export function CreateEmployeeForm({
                 <FormItem>
                   <FormLabel>Rol</FormLabel>
                   <FormControl>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <SelectValue placeholder='Selecciona un rol' />
                       </SelectTrigger>
@@ -186,7 +196,7 @@ export function CreateEmployeeForm({
 
             <div className='flex justify-end gap-3 pt-4'>
               <DialogClose asChild>
-                <Button type='button' variant='outline' ref={closeButtonRef}>
+                <Button type='button' variant='outline'>
                   Cancelar
                 </Button>
               </DialogClose>

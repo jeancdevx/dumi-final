@@ -125,16 +125,11 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "id",
-                            "value"
-                          ]
+                          "required": ["id", "value"]
                         }
                       }
                     },
-                    "required": [
-                      "formFields"
-                    ]
+                    "required": ["formFields"]
                   },
                   "examples": [
                     {
@@ -248,11 +243,7 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "gender",
-                        "size",
-                        "additional"
-                      ]
+                      "required": ["gender", "size", "additional"]
                     },
                     "example": "{\n    \"gender\": \"UNISEX\",\n    \"size\": \"M\",\n    \"additional\": 3\n}",
                     "data": "{\n    \"gender\": \"UNISEX\",\n    \"size\": \"M\",\n    \"additional\": 3\n}"
@@ -290,9 +281,7 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "additional"
-                      ]
+                      "required": ["additional"]
                     },
                     "example": "{\n    \"additional\": 5\n}",
                     "data": "{\n    \"additional\": 5\n}"
@@ -361,9 +350,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "url"
-                      ]
+                      "required": ["url"]
                     },
                     "example": "{\n    \"url\": \"https://assets-dumi-dev.edducode.me/b7dcf630-8eb7-4f1b-9d3a-00320135e6dd/0df98d53-6140-4661-89fc-16c718b61d15.png\"\n}",
                     "data": "{\n    \"url\": \"https://assets-dumi-dev.edducode.me/b7dcf630-8eb7-4f1b-9d3a-00320135e6dd/0df98d53-6140-4661-89fc-16c718b61d15.png\"\n}"
@@ -411,9 +398,7 @@
                           }
                         }
                       },
-                      "required": [
-                        "images"
-                      ]
+                      "required": ["images"]
                     },
                     "example": "{ \n    \"images\": [\n        {\n            \"filename\": \"fondo.png\", \n            \"contentType\": \"image/png\"\n        }\n    ]\n}",
                     "data": "{ \n    \"images\": [\n        {\n            \"filename\": \"fondo.png\", \n            \"contentType\": \"image/png\"\n        }\n    ]\n}"
@@ -567,11 +552,7 @@
                             "type": "integer"
                           }
                         },
-                        "required": [
-                          "gender",
-                          "size",
-                          "additional"
-                        ]
+                        "required": ["gender", "size", "additional"]
                       }
                     },
                     "images": {
@@ -586,10 +567,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "filename",
-                          "contentType"
-                        ]
+                        "required": ["filename", "contentType"]
                       }
                     }
                   },
@@ -662,18 +640,11 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "filename",
-                          "contentType"
-                        ]
+                        "required": ["filename", "contentType"]
                       }
                     }
                   },
-                  "required": [
-                    "name",
-                    "price",
-                    "images"
-                  ]
+                  "required": ["name", "price", "images"]
                 },
                 "example": "{\n\t\"name\": \"JIRA DRAFT TEST\",\n\t\"price\": 24.5,\n\t\"images\": [\n\t\t{\n\t\t\t\"filename\": \"prenda.png\",\n\t\t\t\"contentType\": \"image/png\"\n\t\t},\n\t\t{\n\t\t\t\"filename\": \"prenda2.png\",\n\t\t\t\"contentType\": \"image/png\"\n\t\t}\n\t]\n}",
                 "data": "{\n\t\"name\": \"JIRA DRAFT TEST\",\n\t\"price\": 24.5,\n\t\"images\": [\n\t\t{\n\t\t\t\"filename\": \"prenda.png\",\n\t\t\t\"contentType\": \"image/png\"\n\t\t},\n\t\t{\n\t\t\t\"filename\": \"prenda2.png\",\n\t\t\t\"contentType\": \"image/png\"\n\t\t}\n\t]\n}"
@@ -720,12 +691,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "name",
-                    "description",
-                    "price",
-                    "isDraft"
-                  ]
+                  "required": ["name", "description", "price", "isDraft"]
                 },
                 "example": "{\n\t\"name\": \"Prenda XD\",\n\t\"description\": \"Descripcion actualizada\",\n\t\"price\": 10,\n\t\"isDraft\": true\n}",
                 "data": "{\n\t\"name\": \"Prenda XD\",\n\t\"description\": \"Descripcion actualizada\",\n\t\"price\": 10,\n\t\"isDraft\": true\n}"
@@ -883,10 +849,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "email",
-                        "role"
-                      ]
+                      "required": ["email", "role"]
                     },
                     "example": "{\n\t\"email\": \"d@edducode.me\",\n\t\"role\": \"admin\"\n}",
                     "data": "{\n\t\"email\": \"d@edducode.me\",\n\t\"role\": \"admin\"\n}"
@@ -933,12 +896,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "names",
-                        "lastNames",
-                        "email",
-                        "password"
-                      ]
+                      "required": ["names", "lastNames", "email", "password"]
                     },
                     "example": "{\n\t\"names\": \"Eddu\",\n\t\"lastNames\": \"Dev\", \t\n\t\"email\": \"azabacheeduardo85@gmail.com\",\n\t\"password\": \"edu1234\"\n}\t",
                     "data": "{\n\t\"names\": \"Eddu\",\n\t\"lastNames\": \"Dev\", \t\n\t\"email\": \"azabacheeduardo85@gmail.com\",\n\t\"password\": \"edu1234\"\n}\t"
@@ -1018,10 +976,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "email",
-                        "role"
-                      ]
+                      "required": ["email", "role"]
                     },
                     "example": "{\n    \"email\": \"eddu@edducode.me\",\n\t\"role\": \"admin\"\n}",
                     "data": "{\n    \"email\": \"eddu@edducode.me\",\n\t\"role\": \"admin\"\n}"
@@ -1097,16 +1052,11 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "value"
-                        ]
+                        "required": ["id", "value"]
                       }
                     }
                   },
-                  "required": [
-                    "formFields"
-                  ]
+                  "required": ["formFields"]
                 },
                 "example": "{\n  \"formFields\": [\n    {\n      \"id\": \"email\",\n      \"value\": \"{{admin_email}}\"\n    },\n    {\n      \"id\": \"password\",\n      \"value\": \"{{admin_pass}}\"\n    }\n  ]\n}",
                 "data": "{\n  \"formFields\": [\n    {\n      \"id\": \"email\",\n      \"value\": \"{{admin_email}}\"\n    },\n    {\n      \"id\": \"password\",\n      \"value\": \"{{admin_pass}}\"\n    }\n  ]\n}"
@@ -1148,10 +1098,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "email",
-                    "role"
-                  ]
+                  "required": ["email", "role"]
                 },
                 "example": "{\n    \"email\": \"eddu@edducode.me\",\n\t\"role\": \"admin\"\n}",
                 "data": "{\n    \"email\": \"eddu@edducode.me\",\n\t\"role\": \"admin\"\n}"
@@ -1203,16 +1150,11 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "value"
-                        ]
+                        "required": ["id", "value"]
                       }
                     }
                   },
-                  "required": [
-                    "formFields"
-                  ]
+                  "required": ["formFields"]
                 },
                 "example": "{\n  \"formFields\": [\n    { \"id\": \"email\", \"value\": \"empleado@dumi.com\" },\n    { \"id\": \"password\", \"value\": \"empleado1234\" }\n  ]\n}",
                 "data": "{\n  \"formFields\": [\n    { \"id\": \"email\", \"value\": \"empleado@dumi.com\" },\n    { \"id\": \"password\", \"value\": \"empleado1234\" }\n  ]\n}"
@@ -1261,9 +1203,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "formFields"
-                  ]
+                  "required": ["formFields"]
                 },
                 "example": "{\n  \"formFields\": [\n    { \"id\": \"email\", \"value\": \"azabacheeduardo85@gmail.com\" }\n  ]\n}",
                 "data": "{\n  \"formFields\": [\n    { \"id\": \"email\", \"value\": \"azabacheeduardo85@gmail.com\" }\n  ]\n}"
@@ -1318,11 +1258,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "method",
-                    "formFields",
-                    "token"
-                  ]
+                  "required": ["method", "formFields", "token"]
                 },
                 "example": "{\n  \"method\": \"token\",\n  \"formFields\": [\n    {\n      \"id\": \"password\",\n      \"value\": \"1234eduxd\"\n    }\n  ],\n  \"token\": \"YzE0YmYyNGQxNmI5MjNkMWQ4YzAzMzNkYjdiOWE2YzQ3NTU1ODVmZWI1ZTdhY2VmMmMzYjM3MjIxMDUyODYyODVhMjE1MzExYTIxZWI5NWQ1NGU3OTNiNjI2Yjk5MTA5\"\n}",
                 "data": "{\n  \"method\": \"token\",\n  \"formFields\": [\n    {\n      \"id\": \"password\",\n      \"value\": \"1234eduxd\"\n    }\n  ],\n  \"token\": \"YzE0YmYyNGQxNmI5MjNkMWQ4YzAzMzNkYjdiOWE2YzQ3NTU1ODVmZWI1ZTdhY2VmMmMzYjM3MjIxMDUyODYyODVhMjE1MzExYTIxZWI5NWQ1NGU3OTNiNjI2Yjk5MTA5\"\n}"
@@ -1398,11 +1334,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "names",
-                    "lastNames",
-                    "phone"
-                  ]
+                  "required": ["names", "lastNames", "phone"]
                 },
                 "example": "{\n    \"names\": \"Paco\",\n    \"lastNames\": \"hola\",\n    \"phone\": \"943456798\"\n}",
                 "data": "{\n    \"names\": \"Paco\",\n    \"lastNames\": \"hola\",\n    \"phone\": \"943456798\"\n}"
@@ -1443,10 +1375,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "phone",
-                    "reference"
-                  ]
+                  "required": ["phone", "reference"]
                 },
                 "example": "{\n    \"phone\": \"1341324\",\n    \"reference\": \"esto es una prueba\"\n}",
                 "data": "{\n    \"phone\": \"1341324\",\n    \"reference\": \"esto es una prueba\"\n}"
@@ -1584,10 +1513,7 @@
                                   "type": "integer"
                                 }
                               },
-                              "required": [
-                                "name",
-                                "number"
-                              ]
+                              "required": ["name", "number"]
                             }
                           }
                         }
@@ -1597,10 +1523,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "details",
-                    "customerId"
-                  ]
+                  "required": ["details", "customerId"]
                 },
                 "example": "{\n    \"details\": [\n        {\n            \"clothesVariantId\": \"54726d64-b45d-4c4c-934c-ba4419165069\",\n            \"quantity\": 2,\n            \"customizations\": [\n                {\n                    \"name\": \"Edu\",\n                    \"number\": 2\n                },\n                {\n                    \"name\": \"Javier\",\n                    \"number\": 2\n                }\n            ]\n        }\n    ],\n    \"customerId\": \"5f0a7e99-c30d-4e42-9864-ca89bd06efaf\"\n}",
                 "data": "{\n    \"details\": [\n        {\n            \"clothesVariantId\": \"54726d64-b45d-4c4c-934c-ba4419165069\",\n            \"quantity\": 2,\n            \"customizations\": [\n                {\n                    \"name\": \"Edu\",\n                    \"number\": 2\n                },\n                {\n                    \"name\": \"Javier\",\n                    \"number\": 2\n                }\n            ]\n        }\n    ],\n    \"customerId\": \"5f0a7e99-c30d-4e42-9864-ca89bd06efaf\"\n}"
@@ -1687,10 +1610,7 @@
                                   "type": "integer"
                                 }
                               },
-                              "required": [
-                                "name",
-                                "number"
-                              ]
+                              "required": ["name", "number"]
                             }
                           }
                         },
@@ -1702,9 +1622,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "details"
-                  ]
+                  "required": ["details"]
                 },
                 "example": "{\n    \"details\": [\n        {\n            \"clothesVariantId\": \"54726d64-b45d-4c4c-934c-ba4419165069\",\n            \"quantity\": 2,\n            \"customizations\": [\n                {\n                    \"name\": \"Edu\",\n                    \"number\": 2\n                },\n                {\n                    \"name\": \"Jädsr\",\n                    \"number\": 2\n                }\n            ]\n        },\n        {\n            \"clothesVariantId\": \"af7cf1c2-43cb-499b-9ea4-0520cab6f792\",\n            \"quantity\": 2,\n            \"customizations\": [\n                {\n                    \"name\": \"Edu\",\n                    \"number\": 2\n                },\n                {\n                    \"name\": \"Javier\",\n                    \"number\": 2\n                }\n            ]\n        }\n    ]\n}",
                 "data": "{\n    \"details\": [\n        {\n            \"clothesVariantId\": \"54726d64-b45d-4c4c-934c-ba4419165069\",\n            \"quantity\": 2,\n            \"customizations\": [\n                {\n                    \"name\": \"Edu\",\n                    \"number\": 2\n                },\n                {\n                    \"name\": \"Jädsr\",\n                    \"number\": 2\n                }\n            ]\n        },\n        {\n            \"clothesVariantId\": \"af7cf1c2-43cb-499b-9ea4-0520cab6f792\",\n            \"quantity\": 2,\n            \"customizations\": [\n                {\n                    \"name\": \"Edu\",\n                    \"number\": 2\n                },\n                {\n                    \"name\": \"Javier\",\n                    \"number\": 2\n                }\n            ]\n        }\n    ]\n}"
@@ -1856,19 +1774,10 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "department",
-                        "city",
-                        "district",
-                        "street"
-                      ]
+                      "required": ["department", "city", "district", "street"]
                     }
                   },
-                  "required": [
-                    "quoteId",
-                    "deliveryDate",
-                    "address"
-                  ]
+                  "required": ["quoteId", "deliveryDate", "address"]
                 },
                 "example": "{\n    \"quoteId\": \"1a1167b9-e5f5-464b-a0c5-4aa33b9e6854\",\n    \"deliveryDate\": \"2025-12-10T15:00:03.556Z\",\n    \"address\": {\n        \"department\": \"La Libertad\",\n        \"city\": \"Trujillo\",\n        \"district\":\"Trujillo\",\n        \"street\": \"Av. Jesus de Nazaret 390\"\n    }\n}",
                 "data": "{\n    \"quoteId\": \"1a1167b9-e5f5-464b-a0c5-4aa33b9e6854\",\n    \"deliveryDate\": \"2025-12-10T15:00:03.556Z\",\n    \"address\": {\n        \"department\": \"La Libertad\",\n        \"city\": \"Trujillo\",\n        \"district\":\"Trujillo\",\n        \"street\": \"Av. Jesus de Nazaret 390\"\n    }\n}"
@@ -1906,9 +1815,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "status"
-                  ]
+                  "required": ["status"]
                 },
                 "example": "{\n    \"status\": \"DONE\"\n}",
                 "data": "{\n    \"status\": \"DONE\"\n}"
@@ -1946,9 +1853,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "reason"
-                  ]
+                  "required": ["reason"]
                 },
                 "example": "{ \"reason\": \"Esta es una razon de prueba\"}",
                 "data": "{ \"reason\": \"Esta es una razon de prueba\"}"
@@ -2131,12 +2036,7 @@
     "securityScheme": {},
     "gateway": [],
     "language": "en-US",
-    "apiStatuses": [
-      "developing",
-      "testing",
-      "released",
-      "deprecated"
-    ],
+    "apiStatuses": ["developing", "testing", "released", "deprecated"],
     "mockSettings": {},
     "preProcessors": [],
     "postProcessors": [],

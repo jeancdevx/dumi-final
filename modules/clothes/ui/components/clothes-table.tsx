@@ -3,23 +3,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import {
-  Edit,
-  Eye,
-  ImageOff,
-  MoreHorizontal,
-  PackageSearch,
-  Search
-} from 'lucide-react'
+import { Edit, Eye, ImageOff, PackageSearch, Search } from 'lucide-react'
+
+import { detailPath, editPath } from '@/lib/routes'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
 import {
   Table,
   TableBody,
@@ -90,7 +79,7 @@ export function ClothesTable({
             <TableHead>Nombre</TableHead>
             <TableHead>Precio Base</TableHead>
             <TableHead>Estado</TableHead>
-            <TableHead className='w-[50px]'></TableHead>
+            <TableHead className='w-[120px] text-right'>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -116,7 +105,7 @@ export function ClothesTable({
                 </TableCell>
                 <TableCell className='font-medium'>
                   <Link
-                    href={`${basePath}/${item.id}`}
+                    href={detailPath(basePath, item.id)}
                     className='hover:text-primary hover:underline'
                   >
                     {item.name}
@@ -138,30 +127,26 @@ export function ClothesTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='ghost' size='icon'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Acciones</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem asChild>
-                        <Link href={`${basePath}/${item.id}`}>
-                          <Eye className='mr-2 h-4 w-4' />
-                          Ver
+                  <div className='flex justify-end gap-1'>
+                    <Button variant='ghost' size='icon-sm' asChild>
+                      <Link
+                        href={detailPath(basePath, item.id)}
+                        aria-label='Ver'
+                      >
+                        <Eye className='h-4 w-4' />
+                      </Link>
+                    </Button>
+                    {canEdit && (
+                      <Button variant='ghost' size='icon-sm' asChild>
+                        <Link
+                          href={editPath(basePath, item.id)}
+                          aria-label='Editar'
+                        >
+                          <Edit className='h-4 w-4' />
                         </Link>
-                      </DropdownMenuItem>
-                      {canEdit && (
-                        <DropdownMenuItem asChild>
-                          <Link href={`${basePath}/${item.id}/edit`}>
-                            <Edit className='mr-2 h-4 w-4' />
-                            Editar
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )

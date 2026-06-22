@@ -8,7 +8,7 @@ import { CheckCircle } from 'lucide-react'
 
 import { toast } from 'sonner'
 
-import { updateOrderStatus } from '@/modules/orders/actions/update-order-status'
+import { updateOrderStatusClient } from '@/modules/orders/lib/orders-client'
 
 import {
   AlertDialog,
@@ -43,7 +43,7 @@ export function CompleteOrderDialog({
 
   const handleComplete = () => {
     startTransition(async () => {
-      const result = await updateOrderStatus(orderId, 'DONE')
+      const result = await updateOrderStatusClient(orderId, 'DONE')
 
       if (result.success) {
         toast.success('Orden finalizada exitosamente', {

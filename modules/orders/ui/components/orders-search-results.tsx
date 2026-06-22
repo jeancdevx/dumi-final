@@ -1,55 +1,144 @@
-import { getOrders } from '@/modules/orders/queries'
-import type { OrderStatus } from '@/modules/orders/types'
+'use client'
+
+import { Suspense, useEffect, useMemo, useState } from 'react'
+
+import { useSearchParams } from 'next/navigation'
+
+import { AlertCircle } from 'lucide-react'
+
+import { getOrdersClient } from '@/modules/orders/lib/orders-client'
+import type { Order, OrderStatus } from '@/modules/orders/types'
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import { OrdersTable } from './orders-table'
 
 interface OrdersSearchResultsProps {
-  searchParams: {
-    status?: string
-    sortBy?: string
-    sortOrder?: string
-  }
   basePath?: string
 }
 
-export async function OrdersSearchResults({
-  searchParams,
+function OrdersTableSkeleton() {
+  return (
+    <div className='space-y-3'>
+      <Skeleton className='h-10 w-full' />
+      <Skeleton className='h-16 w-full' />
+      <Skeleton className='h-16 w-full' />
+      <Skeleton className='h-16 w-full' />
+    </div>
+  )
+}
+
+function sortOrders(orders: Order[], sortBy?: string, sortOrder?: string) {
+  if (!sortBy) return orders
+
+  return [...orders].sort((a, b) => {
+    let comparison = 0
+
+    if (sortBy === 'createdAt') {
+      comparison =
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    } else if (sortBy === 'deliveryDate') {
+      comparison =
+        new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime()
+    } else if (sortBy === 'total') {
+      comparison = Number(a.total) - Number(b.total)
+    }
+
+    return sortOrder === 'asc' ? comparison : -comparison
+  })
+}
+
+function OrdersSearchResultsContent({
   basePath = '/admin/orders'
 }: OrdersSearchResultsProps) {
-  const status = searchParams.status as OrderStatus | undefined
+  const searchParams = useSearchParams()
+  const [orders, setOrders] = useState<Order[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  let orders = await getOrders({ status })
+  const filters = useMemo(() => {
+    const status = searchParams.get('status') as OrderStatus | null
+    const sortBy = searchParams.get('sortBy') ?? undefined
+    const sortOrder = searchParams.get('sortOrder') ?? undefined
 
-  // Ordenamiento client-side
-  const sortBy = searchParams.sortBy as
-    | 'createdAt'
-    | 'deliveryDate'
-    | 'total'
-    | undefined
-  const sortOrder = searchParams.sortOrder as 'asc' | 'desc' | undefined
+    return {
+      status: status ?? undefined,
+      sortBy,
+      sortOrder,
+      hasFilters: Boolean(status)
+    }
+  }, [searchParams])
 
-  if (sortBy) {
-    orders = [...orders].sort((a, b) => {
-      let comparison = 0
+  useEffect(() => {
+    let isCurrent = true
 
-      if (sortBy === 'createdAt') {
-        comparison =
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      } else if (sortBy === 'deliveryDate') {
-        comparison =
-          new Date(a.deliveryDate).getTime() -
-          new Date(b.deliveryDate).getTime()
-      } else if (sortBy === 'total') {
-        comparison = Number(a.total) - Number(b.total)
+    async function loadOrders() {
+      setIsLoading(true)
+      setError(null)
+
+      const result = await getOrdersClient({ status: filters.status })
+
+      if (!isCurrent) return
+
+      if (result.success) {
+        setOrders(result.data ?? [])
+        setError(null)
+      } else {
+        setOrders([])
+        setError(result.error || 'No se pudo cargar la lista de órdenes')
       }
 
-      return sortOrder === 'asc' ? comparison : -comparison
-    })
-  }
+      setIsLoading(false)
+    }
 
-  const hasFilters = Boolean(searchParams.status)
+    void loadOrders()
+
+    return () => {
+      isCurrent = false
+    }
+  }, [filters.status, reloadKey])
+
+  if (isLoading) return <OrdersTableSkeleton />
+
+  const sortedOrders = sortOrders(orders, filters.sortBy, filters.sortOrder)
 
   return (
-    <OrdersTable orders={orders} hasFilters={hasFilters} basePath={basePath} />
+    <div className='space-y-4'>
+      {error && (
+        <Alert variant='destructive'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertTitle>Error al cargar órdenes</AlertTitle>
+          <AlertDescription>
+            <p>{error}</p>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='mt-2'
+              onClick={() => setReloadKey(key => key + 1)}
+            >
+              Reintentar
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <OrdersTable
+        orders={sortedOrders}
+        hasFilters={filters.hasFilters}
+        basePath={basePath}
+      />
+    </div>
+  )
+}
+
+export function OrdersSearchResults(props: OrdersSearchResultsProps) {
+  return (
+    <Suspense fallback={<OrdersTableSkeleton />}>
+      <OrdersSearchResultsContent {...props} />
+    </Suspense>
   )
 }

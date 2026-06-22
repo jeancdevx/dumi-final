@@ -1,17 +1,25 @@
 'use client'
 
-import { useActionState, useEffect, useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { EyeIcon, EyeOffIcon, KeyRoundIcon, OctagonAlertIcon } from 'lucide-react'
+import {
+  EyeIcon,
+  EyeOffIcon,
+  KeyRoundIcon,
+  OctagonAlertIcon
+} from 'lucide-react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { resetPassword } from '@/modules/auth/actions/reset-password'
-import { resetPasswordSchema, type ResetPasswordInput } from '@/modules/auth/schemas'
+import { resetPasswordClient } from '@/modules/auth/lib/auth-client'
+import {
+  resetPasswordSchema,
+  type ResetPasswordInput
+} from '@/modules/auth/schemas'
 import type { ActionResponse } from '@/modules/auth/types'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -20,16 +28,16 @@ import { Input } from '@/components/ui/input'
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSlot,
+  InputOTPSlot
 } from '@/components/ui/input-otp'
 
 const initialState: ActionResponse<{ redirectTo: string }> = { success: false }
 
 export function ResetPasswordForm() {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(resetPassword, initialState)
+  const [state, setState] = useState(initialState)
+  const [isPending, setIsPending] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState('')
 
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
@@ -39,24 +47,22 @@ export function ResetPasswordForm() {
   useEffect(() => {
     const savedEmail = window.sessionStorage.getItem('auth.resetPasswordEmail')
     if (savedEmail) {
-      setEmail(savedEmail)
       form.setValue('email', savedEmail)
     } else {
       router.push('/forgot-password')
     }
   }, [form, router])
 
-  const [isTransitioning, startTransition] = useTransition()
+  const handleSubmit = async (data: ResetPasswordInput) => {
+    setIsPending(true)
+    const result = await resetPasswordClient(data)
+    setState(result)
+    setIsPending(false)
 
-  useEffect(() => {
-    if (state.success && state.data?.redirectTo) {
+    if (result.success && result.data?.redirectTo) {
       window.sessionStorage.removeItem('auth.resetPasswordEmail')
-      router.push(state.data.redirectTo)
+      router.push(result.data.redirectTo)
     }
-  }, [state, router])
-
-  if (!email) {
-    return null
   }
 
   return (
@@ -66,7 +72,9 @@ export function ResetPasswordForm() {
 
       <div className='w-full max-w-md'>
         <div className='mb-12 flex flex-col items-center'>
-          <div className='mb-2 text-4xl font-black tracking-tight text-[#2b1608]'>Telar</div>
+          <div className='mb-2 text-4xl font-black tracking-tight text-[#2b1608]'>
+            Telar
+          </div>
           <div className='h-1 w-8 rounded-full bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)]' />
         </div>
 
@@ -75,21 +83,15 @@ export function ResetPasswordForm() {
             <h1 className='mb-2 text-2xl font-bold tracking-tight text-[#2b1608]'>
               Restablecer contraseña
             </h1>
-            <p className='text-sm text-[#50453f]'>Ingresa el código enviado a tu correo y tu nueva contraseña.</p>
+            <p className='text-sm text-[#50453f]'>
+              Ingresa el código enviado a tu correo y tu nueva contraseña.
+            </p>
           </div>
 
           <form
             id='reset-password-form'
             className='space-y-6'
-            onSubmit={form.handleSubmit(data => {
-              startTransition(() => {
-                const formData = new FormData()
-                formData.append('email', data.email)
-                formData.append('code', data.code)
-                formData.append('password', data.password)
-                formAction(formData)
-              })
-            })}
+            onSubmit={form.handleSubmit(handleSubmit)}
           >
             <Controller
               name='code'
@@ -106,17 +108,37 @@ export function ResetPasswordForm() {
                       onChange={field.onChange}
                     >
                       <InputOTPGroup>
-                        <InputOTPSlot index={0} className='h-12 w-12 border-[#d3c3bb] text-lg' />
-                        <InputOTPSlot index={1} className='h-12 w-12 border-[#d3c3bb] text-lg' />
-                        <InputOTPSlot index={2} className='h-12 w-12 border-[#d3c3bb] text-lg' />
-                        <InputOTPSlot index={3} className='h-12 w-12 border-[#d3c3bb] text-lg' />
-                        <InputOTPSlot index={4} className='h-12 w-12 border-[#d3c3bb] text-lg' />
-                        <InputOTPSlot index={5} className='h-12 w-12 border-[#d3c3bb] text-lg' />
+                        <InputOTPSlot
+                          index={0}
+                          className='h-12 w-12 border-[#d3c3bb] text-lg'
+                        />
+                        <InputOTPSlot
+                          index={1}
+                          className='h-12 w-12 border-[#d3c3bb] text-lg'
+                        />
+                        <InputOTPSlot
+                          index={2}
+                          className='h-12 w-12 border-[#d3c3bb] text-lg'
+                        />
+                        <InputOTPSlot
+                          index={3}
+                          className='h-12 w-12 border-[#d3c3bb] text-lg'
+                        />
+                        <InputOTPSlot
+                          index={4}
+                          className='h-12 w-12 border-[#d3c3bb] text-lg'
+                        />
+                        <InputOTPSlot
+                          index={5}
+                          className='h-12 w-12 border-[#d3c3bb] text-lg'
+                        />
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
                   {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
+                    <p className='text-sm text-red-600'>
+                      {fieldState.error.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -142,7 +164,7 @@ export function ResetPasswordForm() {
                       type={showPassword ? 'text' : 'password'}
                       placeholder='••••••••'
                       autoComplete='new-password'
-                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pl-11 pr-12'
+                      className='h-12 rounded-lg border-[#d3c3bb] bg-white pr-12 pl-11'
                       aria-invalid={fieldState.invalid}
                     />
                     <Button
@@ -151,7 +173,11 @@ export function ResetPasswordForm() {
                       size='sm'
                       className='absolute top-0 right-0 h-full px-3 hover:bg-transparent'
                       onClick={() => setShowPassword(prev => !prev)}
-                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      aria-label={
+                        showPassword
+                          ? 'Ocultar contraseña'
+                          : 'Mostrar contraseña'
+                      }
                     >
                       {showPassword ? (
                         <EyeOffIcon className='h-4 w-4 text-[#50453f]' />
@@ -161,23 +187,35 @@ export function ResetPasswordForm() {
                     </Button>
                   </div>
                   {fieldState.error?.message && (
-                    <p className='text-sm text-red-600'>{fieldState.error.message}</p>
+                    <p className='text-sm text-red-600'>
+                      {fieldState.error.message}
+                    </p>
                   )}
                   {/* Password requirements */}
-                  <div className="space-y-1 mt-2">
-                    <p className={`text-xs ${(field.value || '').length >= 12 ? 'text-green-600' : 'text-[#82746e]'}`}>
+                  <div className='mt-2 space-y-1'>
+                    <p
+                      className={`text-xs ${(field.value || '').length >= 12 ? 'text-green-600' : 'text-[#82746e]'}`}
+                    >
                       • Al menos 12 caracteres
                     </p>
-                    <p className={`text-xs ${/[A-Z]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                    <p
+                      className={`text-xs ${/[A-Z]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}
+                    >
                       • Una letra mayúscula
                     </p>
-                    <p className={`text-xs ${/[a-z]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                    <p
+                      className={`text-xs ${/[a-z]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}
+                    >
                       • Una letra minúscula
                     </p>
-                    <p className={`text-xs ${/[0-9]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                    <p
+                      className={`text-xs ${/[0-9]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}
+                    >
                       • Un número
                     </p>
-                    <p className={`text-xs ${/[^A-Za-z0-9]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}>
+                    <p
+                      className={`text-xs ${/[^A-Za-z0-9]/.test(field.value || '') ? 'text-green-600' : 'text-[#82746e]'}`}
+                    >
                       • Un carácter especial
                     </p>
                   </div>
@@ -195,10 +233,10 @@ export function ResetPasswordForm() {
             <Button
               type='submit'
               form='reset-password-form'
-              disabled={isPending || isTransitioning}
+              disabled={isPending}
               className='h-12 w-full rounded-xl bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] text-base font-bold text-white hover:opacity-95'
             >
-              {isPending || isTransitioning ? 'Guardando...' : 'Cambiar contraseña'}
+              {isPending ? 'Guardando...' : 'Cambiar contraseña'}
             </Button>
           </form>
 

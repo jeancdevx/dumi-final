@@ -1,37 +1,22 @@
-import { getClients, searchClients } from '@/modules/clients/queries'
-import { ClientsTable } from '@/modules/clients/ui/components/clients-table'
-import { CreateClientForm } from '@/modules/clients/ui/components/create-client-form'
-import { SearchClientsForm } from '@/modules/clients/ui/components/search-clients-form'
+import { Suspense } from 'react'
 
-interface ClientsPageProps {
-  searchParams: Promise<{
-    names?: string
-    lastnames?: string
-    phone?: string
-  }>
+import { ClientsPageClient } from '@/modules/clients/ui/components/clients-page-client'
+
+import { Spinner } from '@/components/ui/spinner'
+
+function ClientsPageFallback() {
+  return (
+    <div className='text-muted-foreground flex flex-1 items-center justify-center gap-2 p-6 text-sm'>
+      <Spinner />
+      Cargando clientes...
+    </div>
+  )
 }
 
-export default async function ClientsPage({ searchParams }: ClientsPageProps) {
-  const { names, lastnames, phone } = await searchParams
-  const hasFilters = !!(names || lastnames || phone)
-
-  const clients = hasFilters
-    ? await searchClients({ names, lastnames, phone })
-    : await getClients()
-
+export default function ClientsPage() {
   return (
-    <div className='flex flex-1 flex-col gap-6 p-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight'>Clientes</h1>
-          <p className='text-muted-foreground'>
-            Gestiona los clientes de tu negocio
-          </p>
-        </div>
-        <CreateClientForm />
-      </div>
-      <SearchClientsForm />
-      <ClientsTable clients={clients} hasFilters={hasFilters} />
-    </div>
+    <Suspense fallback={<ClientsPageFallback />}>
+      <ClientsPageClient />
+    </Suspense>
   )
 }

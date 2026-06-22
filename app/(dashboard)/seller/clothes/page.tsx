@@ -8,20 +8,7 @@ import { ClothesSearchResults } from '@/modules/clothes/ui/components/clothes-se
 
 import { Button } from '@/components/ui/button'
 
-interface ClothesPageProps {
-  searchParams: Promise<{
-    q?: string
-    size?: string
-    gender?: string
-    status?: string
-  }>
-}
-
-export default async function SellerClothesPage({
-  searchParams
-}: ClothesPageProps) {
-  const params = await searchParams
-
+export default function SellerClothesPage() {
   return (
     <div className='flex flex-1 flex-col gap-6 p-6'>
       <div className='flex items-center justify-between'>
@@ -44,11 +31,7 @@ export default async function SellerClothesPage({
         <ClothesFilters />
       </div>
 
-      <ClothesSearchResults
-        searchParams={params}
-        basePath='/seller/clothes'
-        canEdit={false}
-      />
+      <ClothesSearchResults basePath='/seller/clothes' canEdit={false} />
     </div>
   )
 }

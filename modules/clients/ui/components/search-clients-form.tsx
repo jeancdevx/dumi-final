@@ -1,8 +1,10 @@
 'use client'
 
 import { useRef, useState } from 'react'
+
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, X, RefreshCw } from 'lucide-react'
+
+import { RefreshCw, Search, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +16,15 @@ interface Filters {
   phone: string
 }
 
-export function SearchClientsForm() {
+interface SearchClientsFormProps {
+  basePath?: string
+  onRefresh?: () => void
+}
+
+export function SearchClientsForm({
+  basePath = '/admin/clients',
+  onRefresh
+}: SearchClientsFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<Filters>({
@@ -33,7 +43,7 @@ export function SearchClientsForm() {
     if (newFilters.lastnames) params.set('lastnames', newFilters.lastnames)
     if (newFilters.phone) params.set('phone', newFilters.phone)
     const queryString = params.toString()
-    return queryString ? `/admin/clients?${queryString}` : '/admin/clients'
+    return queryString ? `${basePath}?${queryString}` : basePath
   }
 
   function handleChange(field: keyof Filters, value: string) {
@@ -59,12 +69,12 @@ export function SearchClientsForm() {
     const emptyFilters = { names: '', lastnames: '', phone: '' }
     setFilters(emptyFilters)
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    router.replace('/admin/clients')
+    router.replace(basePath)
   }
 
   async function handleRefresh() {
     setIsRefreshing(true)
-    router.refresh()
+    onRefresh?.()
     // Pequeño delay visual para que el usuario note que se actualizó
     setTimeout(() => setIsRefreshing(false), 600)
   }
@@ -141,7 +151,9 @@ export function SearchClientsForm() {
           title='Actualizar lista'
           disabled={isRefreshing}
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+          />
           <span className='sr-only'>Actualizar lista</span>
         </Button>
       </div>

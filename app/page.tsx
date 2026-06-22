@@ -13,7 +13,9 @@ export default function Home() {
     <div className='min-h-svh bg-[#faf9f8] text-[#1a1c1c]'>
       <header className='fixed top-0 z-50 w-full bg-[#faf9f8]/85 backdrop-blur-lg'>
         <div className='mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4'>
-          <div className='text-2xl font-black tracking-tight text-[#2b1608]'>Telar</div>
+          <div className='text-2xl font-black tracking-tight text-[#2b1608]'>
+            Telar
+          </div>
         </div>
       </header>
 
@@ -40,7 +42,9 @@ export default function Home() {
             <div className='mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-[#eeeeed] text-[#2b1608] transition-colors duration-300 group-hover:bg-[linear-gradient(45deg,#2b1608_0%,#5c4130_100%)] group-hover:text-white'>
               <LogInIcon className='size-5' />
             </div>
-            <h2 className='mb-2 text-2xl font-bold text-[#2b1608]'>Iniciar sesión</h2>
+            <h2 className='mb-2 text-2xl font-bold text-[#2b1608]'>
+              Iniciar sesión
+            </h2>
             <p className='mb-8 text-[#50453f]'>
               Continúa con tu operación y entra con tus credenciales.
             </p>
@@ -73,7 +77,9 @@ export default function Home() {
 
       <footer className='border-transparent py-8'>
         <div className='mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-8 md:flex-row'>
-          <p className='text-sm tracking-widest text-stone-400 uppercase'>© 2026 Telar.</p>
+          <p className='text-sm tracking-widest text-stone-400 uppercase'>
+            © 2026 Telar.
+          </p>
         </div>
       </footer>
     </div>

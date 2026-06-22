@@ -6,10 +6,9 @@ import { ChevronDown, Phone, User } from 'lucide-react'
 
 import { format } from 'date-fns'
 
+import { CreateOrderDialog } from '@/modules/orders/ui/components/create-order-dialog'
 import { QUOTATION_STATUSES } from '@/modules/quotations/constants'
 import type { QuotationWithDetails } from '@/modules/quotations/types'
-
-import { CreateOrderDialog } from '@/modules/orders/ui/components/create-order-dialog'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -31,9 +30,13 @@ import {
 
 interface QuotationDetailProps {
   quotation: QuotationWithDetails
+  ordersBasePath?: string
 }
 
-export function QuotationDetail({ quotation }: QuotationDetailProps) {
+export function QuotationDetail({
+  quotation,
+  ordersBasePath = '/admin/orders'
+}: QuotationDetailProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   function toggleRow(id: string) {
@@ -249,10 +252,11 @@ export function QuotationDetail({ quotation }: QuotationDetailProps) {
             </div>
 
             {quotation.status === 'PENDING' && (
-              <div className='pt-3 border-t'>
+              <div className='border-t pt-3'>
                 <CreateOrderDialog
                   quoteId={quotation.id}
                   quotationCode={quotation.id.slice(0, 8).toUpperCase()}
+                  basePath={ordersBasePath}
                   trigger={
                     <Button className='w-full'>Aprobar y Generar Orden</Button>
                   }

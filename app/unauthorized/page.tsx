@@ -1,16 +1,27 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
 import Link from 'next/link'
 
 import { ShieldX } from 'lucide-react'
 
-import { getRedirectPathByRole, getSession } from '@/modules/auth/lib/dal'
+import {
+  getClientSession,
+  getRedirectPathByRole
+} from '@/modules/auth/lib/session-client'
 
 import { Button } from '@/components/ui/button'
 
-export default async function UnauthorizedPage() {
-  const session = await getSession()
+export default function UnauthorizedPage() {
+  const [backPath, setBackPath] = useState<string | null>(null)
 
-  const backPath = session ? getRedirectPathByRole(session.roles) : '/sign-in'
-  const isAuthenticated = !!session
+  useEffect(() => {
+    const session = getClientSession()
+    queueMicrotask(() => {
+      setBackPath(session ? getRedirectPathByRole(session.roles) : null)
+    })
+  }, [])
 
   return (
     <div className='flex min-h-screen flex-col items-center justify-center gap-6 p-6'>
@@ -25,7 +36,7 @@ export default async function UnauthorizedPage() {
         </p>
       </div>
       <div className='flex gap-4'>
-        {isAuthenticated ? (
+        {backPath ? (
           <Button asChild>
             <Link href={backPath}>Volver al panel</Link>
           </Button>
